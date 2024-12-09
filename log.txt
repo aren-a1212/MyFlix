@@ -1,0 +1,36 @@
+URL: /
+Timestamp: Mon Dec 09 2024 11:05:46 GMT-0600 (Central Standard Time)
+
+URL: /favicon.ico
+Timestamp: Mon Dec 09 2024 11:05:47 GMT-0600 (Central Standard Time)
+
+URL: /
+Timestamp: Mon Dec 09 2024 11:05:54 GMT-0600 (Central Standard Time)
+
+URL: /documentation.html
+Timestamp: Mon Dec 09 2024 11:05:59 GMT-0600 (Central Standard Time)
+
+URL: /
+Timestamp: Mon Dec 09 2024 11:11:17 GMT-0600 (Central Standard Time)
+
+URL: /
+Timestamp: Mon Dec 09 2024 11:11:21 GMT-0600 (Central Standard Time)
+
+URL: /documentation.html
+Timestamp: Mon Dec 09 2024 11:11:27 GMT-0600 (Central Standard Time)
+
+URL: /
+Timestamp: Mon Dec 09 2024 11:17:40 GMT-0600 (Central Standard Time)
+
+URL: /apple-touch-icon-precomposed.png
+Timestamp: Mon Dec 09 2024 14:18:25 GMT-0600 (Central Standard Time)
+
+URL: /
+Timestamp: Mon Dec 09 2024 14:18:25 GMT-0600 (Central Standard Time)
+
+URL: /apple-touch-icon.png
+Timestamp: Mon Dec 09 2024 14:18:25 GMT-0600 (Central Standard Time)
+
+URL: /favicon.ico
+Timestamp: Mon Dec 09 2024 14:18:25 GMT-0600 (Central Standard Time)
+
