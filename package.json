@@ -1,0 +1,27 @@
+{
+  "name": "movieapp",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aren-a1212/MyFlix.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aren-a1212/MyFlix/issues"
+  },
+  "homepage": "https://github.com/aren-a1212/MyFlix#readme",
+  "description": "",
+  "dependencies": {
+    "loadash": "^1.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.16.0"
+  }
+}
