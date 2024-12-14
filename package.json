@@ -2,5 +2,24 @@
   "dependencies": {
     "body-parser": "^1.20.3",
     "express": "^4.21.2"
-  }
+  },
+  "name": "movieapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aren-a1212/MyFlix.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aren-a1212/MyFlix/issues"
+  },
+  "homepage": "https://github.com/aren-a1212/MyFlix#readme",
+  "description": ""
 }
