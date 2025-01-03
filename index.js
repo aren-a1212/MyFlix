@@ -19,14 +19,14 @@ const topMovies = [
     { title: 'The Lion King', year: 1994, genre: 'Animation, Adventure, Drama' }
   ];
   
-// Define the root route `/` with a textual response
+
 app.get('/', (req, res) => {
   res.send('Welcome to the Movie API! Visit /movies to see my top 10 movies.');
 });
 
 // Define the `/movies` route with JSON data
 app.get('/movies', (req, res) => {
-  res.json(topMovies);  // Send the topMovies array as a JSON response
+  res.json(topMovies); 
 });
 
 // Start the server
