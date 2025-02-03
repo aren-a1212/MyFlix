@@ -26,7 +26,7 @@ app.get('/users', async (req, res) => {
 });
   
   //Creates new users
-  app.post('/users/:username', async (req, res) => {
+  app.post('/users', async (req, res) => {
     await Users.findOne({ username: req.body.username })
       .then((user) => {
         if (user) {
@@ -55,7 +55,7 @@ app.get('/users', async (req, res) => {
   });
 
  //Updates info 
- app.put('/users/:userame', async (req, res) => {
+ app.put('/users/:username', async (req, res) => {
   await Users.findOneAndUpdate({ username: req.params.username }, { $set:
     {
       firstName:req.body.firstName,

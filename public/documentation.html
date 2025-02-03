@@ -39,7 +39,7 @@
         <!--Get movie by title--->
         <tr>
             <td>Get Movies by Movie Title</td>
-            <td>/movies/:Title</td>
+            <td>/movies/:title</td>
             <td>Returns a movie by its specified title</td>
             <td>GET</td>
             <td>title (URL parameter)</td>
@@ -66,6 +66,20 @@
             <td>None</td>
             <td>JSON object about director and movie they directed</td>
         </tr>
+
+         <!--Gets all existing users-->
+         <tr>
+            <td>Gets all existing users</td>
+            <td>/users</td>
+            <td>Displays all existing users</td>
+            <td>GET</td>
+            <td>username (URL parameter)</td>
+            <td>None</td>
+            <td>JSON object with information</td>
+        </tr>
+
+
+
         <!--Create a new user-->
         <tr>
             <td>Create a New User</td>
@@ -79,7 +93,7 @@
         <!--Update user name-->
         <tr>
             <td>Update a User Name</td>
-            <td>/users/:Username</td>
+            <td>/users/:username</td>
             <td>Allows a user to update name and other info</td>
             <td>PUT</td>
             <td>Username (URL parameter)</td>
@@ -89,7 +103,7 @@
         <!--Add movie to favorites-->
         <tr>
             <td>Add a Favorite Movie</td>
-            <td>/users/:Username/movies/:movieTitle</td>
+            <td>/users/:username/movieid</td>
             <td>Allows a user to add a favorite movie</td>
             <td>POST</td>
             <td>username (URL parameter)</td>
@@ -99,7 +113,7 @@
         <!--Delete a user's favorite movie-->
         <tr>
             <td>Remove a Movie From Favorites</td>
-            <td>/users/:Username/movies/:movieTitle</td>
+            <td>/users/:username/movieid</td>
             <td>Allows a user to remove movies from the favorite list</td>
             <td>DELETE</td>
             <td>username, movieid</td>
@@ -109,7 +123,7 @@
         <!--Deregister a user-->
         <tr>
             <td>Delete a User</td>
-            <td>/users/:Username</td>
+            <td>/users/:username</td>
             <td>Allows a user to be deleted</td>
             <td>DELETE</td>
             <td>username (URL parameter)</td>
