@@ -49,7 +49,7 @@
         <!--Get movie by genre-->
         <tr>
             <td>Get Movies by Genre</td>
-            <td>/movies/Genre/:GenreName</td>
+            <td>/movies/Genre/:genre</td>
             <td>Returns a movie by its genre</td>
             <td>GET</td>
             <td>name (URL parameter)</td>
@@ -73,7 +73,7 @@
             <td>/users</td>
             <td>Displays all existing users</td>
             <td>GET</td>
-            <td>username (URL parameter)</td>
+            <td>None (URL parameter)</td>
             <td>None</td>
             <td>JSON object with information</td>
         </tr>
@@ -86,11 +86,11 @@
             <td>/users</td>
             <td>Allows a new user to create profile</td>
             <td>POST</td>
-            <td>username (URL parameter)</td>
+            <td>None (URL parameter)</td>
             <td>None</td>
             <td>JSON object with information</td>
         </tr>
-        <!--Update user name-->
+        <!--Update user info-->
         <tr>
             <td>Update a User Name</td>
             <td>/users/:username</td>
@@ -100,13 +100,13 @@
             <td>JSON object with updated user info</td>
             <td>Confirmation message</td>
         </tr>
-        <!--Add movie to favorites-->
+        <!--Add movie to Users favorites-->
         <tr>
             <td>Add a Favorite Movie</td>
             <td>/users/:username/movieid</td>
             <td>Allows a user to add a favorite movie</td>
             <td>POST</td>
-            <td>username (URL parameter)</td>
+            <td>username, movieid (URL parameter)</td>
             <td>JSON object with movie title</td>
             <td>Updated list of favorite movies</td>
         </tr>
