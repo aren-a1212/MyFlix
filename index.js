@@ -3,15 +3,18 @@ const Models = require('./models.js');
 const Movies = Models.Movie;
 const Users = Models.User;
 mongoose.connect('mongodb://localhost:27017/movies', { useNewUrlParser: true, useUnifiedTopology: true });
-
+const { check, validationResult } = require('express-validator');
 
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+
 app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+const cors = require('cors');
+app.use(cors());
 let auth = require('./auth.js')(app);
 const passport = require('passport');
 require('./passport.js');
@@ -28,7 +31,20 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
 });
   
   //Creates new users
-  app.post('/users',async (req, res) => {
+  app.post('/users',[
+    check('username', 'Username is required').isLength({min: 5}),
+    check('firstName', 'firstName contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('lastName', 'lastName contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('Password', 'Password is required').not().isEmpty(),
+    check('Email', 'Email does not appear to be valid').isEmail()
+  ],async (req, res) => {
+    let errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    let hashedPassword = Users.hashPassword(req.body.password);
     await Users.findOne({ username: req.body.username })
       .then((user) => {
         if (user) {
@@ -57,7 +73,18 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
   });
 
  //Updates info 
- app.put('/users/:username', passport.authenticate('jwt', { session: false }), async (req, res) => {
+ app.put('/users/:username', passport.authenticate('jwt', { session: false }),[
+  check("username", "username is required").isLength({ min: 5 }),
+  check(
+    "username",
+    "Username contains non alphanumeric characters - not allowed."
+  ).isAlphanumeric(),
+  check("password", "Password is required").not().isEmpty()], async (req, res) => {
+    let errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
   // CONDITION TO CHECK ADDED HERE
   if(req.user.username !== req.params.username){
       return res.status(400).send('Permission denied');
@@ -181,5 +208,8 @@ app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }),
     });
   });
 
-app.listen(8080, () => console.log('listening on port 8080'))
+  const port = process.env.PORT || 8080;
+  app.listen(port, '0.0.0.0',() => {
+   console.log('Listening on Port ' + port);
+  });
 
