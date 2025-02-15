@@ -15,10 +15,23 @@ app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const cors = require('cors');
-app.use(cors());
 let auth = require('./auth.js')(app);
 const passport = require('passport');
 require('./passport.js');
+
+const allowedOrigins = ['http://localhost:8080', 'https://movies-fix-b2e97731bf8c.herokuapp.com'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){ // If a specific origin isn’t found on the list of allowed origins
+      let message = 'The CORS policy for this application doesn’t allow access from origin ' + origin;
+      return callback(new Error(message ), false);
+    }
+    return callback(null, true);
+  }
+}));
+
 //get all users 
 app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
   await Users.find()
@@ -66,6 +79,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
             res.status(500).send('Error: ' + error);
           })
         }
+
       })
       .catch((error) => {
         console.error(error);
