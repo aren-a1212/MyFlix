@@ -40,13 +40,18 @@ let userSchema = mongoose.Schema({
     isActive:{type:Boolean},
     favoriteMovies:[{type:mongoose.Schema.Types.ObjectId, ref:'Movie'}],
 });
+// Static method to hash password
 userSchema.statics.hashPassword = function(password) {
-    return bcrypt.hashSync(password, 10);
-  };
-  
-  userSchema.methods.validatePassword = function(password) {
-    return bcrypt.compareSync(password, this.password);
-  };
+    if (!password) {
+        throw new Error('Password is required');
+    }
+    return bcrypt.hashSync(password, bcrypt.genSaltSync(10));
+};
+
+// Method to validate password
+userSchema.methods.validatePassword = function(password) {
+    return bcrypt.compareSync(password, this.Password); 
+};
 let Movie = mongoose.model('Movie',movieSchema);
 let User = mongoose.model('User',userSchema);
 

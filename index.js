@@ -47,46 +47,47 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
 });
   
   //Creates new users
-  app.post('/users',[
-    check('username', 'Username is required').isLength({min: 5}),
-    check('firstName', 'firstName contains non alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('lastName', 'lastName contains non alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('username', 'Username contains non alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('Password', 'Password is required').not().isEmpty(),
+  app.post('/users', [
+    check('username', 'Username is required').isLength({ min: 5 }),
+    check('firstName', 'firstName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('lastName', 'lastName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+    check('password', 'Password is required').not().isEmpty(),
+    check('password', 'Password must be at least 8 characters long').isLength({ min: 8 }),
     check('Email', 'Email does not appear to be valid').isEmail()
-  ],async (req, res) => {
-    let errors = validationResult(req);
-
+  ], async (req, res) => {
+    // Validate request body
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    let hashedPassword = Users.hashPassword(req.body.password);
-    await Users.findOne({ username: req.body.username })
-      .then((user) => {
-        if (user) {
-          return res.status(400).send(req.body.username + 'already exists');
-        } else {
-          Users
-            .create({
-              firstName:req.body.firstName,
-              lastName:req.body.lastName,
-              username:req.body.username,
-              password: hashedPassword,
-              Email: req.body.Email,
-              Birthday: req.body.Birthday
-            })
-            .then((user) =>{res.status(201).json(user) })
-          .catch((error) => {
-            console.error(error);
-            res.status(500).send('Error: ' + error);
-          })
-        }
-
-      })
-      .catch((error) => {
-        console.error(error);
-        res.status(500).send('Error: ' + error);
+  
+    try {
+      // Check if username already exists
+      const existingUser = await Users.findOne({ username: req.body.username });
+      if (existingUser) {
+        return res.status(400).send(req.body.username + ' already exists');
+      }
+  
+      // Hash the password
+      const hashedPassword = Users.hashPassword(req.body.password);
+  
+      // Create the new user
+      const newUser = await Users.create({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        username: req.body.username,
+        password: hashedPassword,
+        Email: req.body.Email,
+        Birthday: req.body.Birthday
       });
+  
+      // Return the created user
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Error: ' + error.message);
+    }
   });
 
  //Updates info 
