@@ -4,6 +4,7 @@ const Movies = Models.Movie;
 const Users = Models.User;
 mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 //mongoose.connect('mongodb://localhost:27017/movies', { useNewUrlParser: true, useUnifiedTopology: true });
+const bcrypt = require('bcrypt');
 const { check, validationResult } = require('express-validator');
 
 const express = require('express');
@@ -21,7 +22,7 @@ require('./passport.js');
 
 app.get("/", (req, res) => {res.send(`Welcome to Myflix!!- Lets get started!`);});
 
-const allowedOrigins = ['http://localhost:8080', 'https://movies-fix-b2e97731bf8c.herokuapp.com'];
+const allowedOrigins = ['http://localhost:8080', 'https://movies-fix-b2e97731bf8c.herokuapp.com/'];
 
 app.use(cors({
   origin: (origin, callback) => {
