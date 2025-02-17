@@ -4,7 +4,6 @@ const Movies = Models.Movie;
 const Users = Models.User;
 mongoose.connect(process.env.CONNECTION_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 //mongoose.connect('mongodb://localhost:27017/movies', { useNewUrlParser: true, useUnifiedTopology: true });
-const bcrypt = require('bcrypt');
 const { check, validationResult } = require('express-validator');
 
 const express = require('express');
@@ -72,7 +71,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
               firstName:req.body.firstName,
               lastName:req.body.lastName,
               username:req.body.username,
-              Password: req.body.Password,
+              password: hashedPassword,
               Email: req.body.Email,
               Birthday: req.body.Birthday
             })
@@ -114,7 +113,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
         firstName:req.body.firstName,
         lastName:req.body.lastName,
         username:req.body.username,
-        Password: req.body.Password,
+        password: hashedPassword,
         Email: req.body.Email,
         Birthday: req.body.Birthday
       }
