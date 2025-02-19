@@ -103,18 +103,9 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
-    if (
-      req.user.Username === req.params.username ||
-      req.user.Username === 'RobAt'
-  ) {
-      let hashedPassword = () => {
-          if (req.body.password) {
-              return Users.hashPassword(req.body.password);
-          } else {
-              return req.body.password;
-          }
-      };
-  // CONDITION ENDS
+  let hashedPassword = Users.hashPassword(req.body.password);
+
+
   await Users.findOneAndUpdate({ username: req.params.username }, {
       $set:
       {
@@ -134,11 +125,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
           console.log(err);
           res.status(500).send('Error: ' + err);
       });
-    } else {
-      return res.status(400).send('Permission denied');
-  }
-}
-);
+});
     
  // Allow users to remove a movie to their list of favorites 
 app.delete('/users/:username/:movieid',passport.authenticate('jwt', { session: false }), async(req , res) =>{
