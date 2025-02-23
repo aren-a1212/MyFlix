@@ -1,66 +1,92 @@
 # MYFLIX
 *MYFLIX* is a RESTful API built with Node.js, Express, MongoDB, and Passport for handling user authentication and managing movies, users, and their favorites. The API allows for user registration, login, and CRUD operations on movies and user profiles.
 
-## Features
-- Fully functional movie listing app
-- Dynamically loads a list of movies from an external API
-- Allows viewing of detailed information about each movie (title, release year, genre, etc.)
-- Responsive design that works on various screen sizes
-- Search feature to find movies by title
-- Sort movies by release date or rating
-- Custom loading message while fetching data
+## Key Features
+
+**Goals**
+
+- Provide Movie Data: The API returns all the necessary movie details, such as titles, descriptions, genres, and more.
+- User Profiles: Users can register, update their details, and save movies they like to their favorite list.
+- RESTful Design: I’ve followed best practices for building RESTful APIs, ensuring smooth communication between the client and server.
+
+
+1. Movies
+
+- Fetch a list of all movies.
+- Get detailed information about a specific movie by its title (description, genre, director, image URL, and more).
+
+2. Genres
+
+- Retrieve information about a genre (description) by its name.
+
+3. Directors
+
+- Get director details (bio, birth year, and death year) by name.
+
+4. User Management
+
+- Register a new user.
+- Update user details (e.g., username, email, password, and date of birth).
+- Add and remove movies from the user's list of favorites.
+- Deregister a user account when they no longer wish to use the app.
+
 
 ## API Endpoints
-**GET /movies**: Fetches all movies in the database.
-**GET /movies/:title**: Fetches a movie by its title.
-**GET /genres/:name**: Fetches movies belonging to a specific genre.
-**GET /directors/:name**: Fetches movies directed by a specific director.
-**POST /users**: Registers a new user with a username, email, password, and optional birthday.
-**LOGIN/username:&password:Genreates Token to authenticate user.
-**PUT /users/:username**: Updates the user profile by username, with optional fields like newUsername, newEmail, newPassword, and newBirthday.
-**PUT /users/:username/favourites/:movieID**: Adds a movie to the user's favorites list by movie ID.
-**POST /login**: Logs in a user by email and password, returns a JWT token.
-**DELETE /users/:username**: Deletes a user by username.
-**DELETE /users/:username/favourites/:movieID**: Deletes a movie from the user's favorites list by movie ID.
 
-## Usage:
-- Navigate the movie list
-- Click on a movie to view its details
-- Use the search bar to find specific movies
-- Sort the list by release date or rating
+Here’s a list of the available API endpoints and their descriptions:
 
-## Setup
-*local*
-1. Clone the repository: `git clone https://github.com/JasDevelops/DojoDB`
-2. Navigate to Project folder: `cd <project-folder>`
-3. Install dependencies: `npm install`
-4. Start application locally: `npm start`
-5. Access in browser `http://localhost:3000`
+| Endpoint                      | Method | Description                            |
+| ----------------------------- | ------ | -------------------------------------- |
+| `/movies`                     | GET    | Get all movies                         |
+| `/movies/:title`              | GET    | Get a specific movie by title          |
+| `/genres/:name`               | GET    | Get details about a genre              |
+| `/directors/:name`            | GET    | Get details about a director           |
+| `/users`                      | POST   | Register a new user                    |
+| `/users/:username`            | PUT    | Update user details                    |
+| `/users/:username/movies/:id` | POST   | Add a movie to a user's favorites      |
+| `/users/:username/movies/:id` | DELETE | Remove a movie from a user's favorites |
+| `/users/:username`            | DELETE | Deregister a user account              |
+
+## How to Run Locally
+
+If you want to run the myFlix Movie API locally, follow these steps:
+
+**Clone the Repository**
+
+```bash
+git clone https://github.com/yourusername/myflix-api.git
+cd myflix-api
+```
+
+**Install Dependencies**
+
+```bash
+npm install
+```
+
+**Set Up MongoDB**
+
+- Connect to your MongoDB instance (local or cloud-based).
+- Create a .env file and add your MongoDB connection string.
+
+**Run the Server**
+
+```bash
+npm start
+```
+
+**Test the API**
+Open Postman or your API testing tool to verify the endpoints are working correctly.
 
 ## Technologies Used
-- **Node.js**: Server-side runtime environment
-- **Express**: Framework to handle routing, log requests and serve static files
-- **Morgan**: HTTP request logger middleware
-- **MongoDB** - NoSQL database to store movie and user data.
-- **Mongoose** - ODM (Object Data Modeling) library for MongoDB.
-- **Passport.js** - Authentication middleware for Node.js.
-- **Bcrypt.js** - Library for hashing passwords.
-- **JWT (JSON Web Tokens)** - For authenticating users.
-- **CORS** - To enable cross-origin requests from allowed origins.
-- **GitHub** - Version control and repository hosting.
-- **Heroku** - Platform as a Service (PaaS) for hosting and deploying the app.
 
+- Backend: Node.js, Express
+- Database: MongoDB with Mongoose ORM
+- Authentication: JWT (JSON Web Tokens)
+- Testing: Postman
+- Deployment: Heroku
+- Middleware: body-parser, morgan, and other Express middleware
 ## Contributing
 
 Feel free to fork this repository, create a branch, and submit a pull request. Please ensure you follow the code formatting guidelines and include tests for any new features.
-
-## License
-
-MIT License. See LICENSE for more information.
-
-## Acknowledgment
-
- **MongoDB Atlas** for the cloud database service
-- **Heroku** for hosting the app
-- **GitHub** for version control and repository management.
 
