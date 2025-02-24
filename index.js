@@ -19,7 +19,7 @@ let auth = require('./auth.js')(app);
 const passport = require('passport');
 require('./passport.js');
 
-app.get("/", (req, res) => {res.send(`Welcome to Myflix!!- Lets get started!`);});
+app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get started!</p> <p><a href="/documentation.html">Click here to view the Documentation page</a></p>`);});
 
 const allowedOrigins = ['http://localhost:8080', 'https://movies-fix-b2e97731bf8c.herokuapp.com/'];
 
