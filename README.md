@@ -42,6 +42,7 @@ Here’s a list of the available API endpoints and their descriptions:
 | `/genres/:name`               | GET    | Get details about a genre              |
 | `/directors/:name`            | GET    | Get details about a director           |
 | `/users`                      | POST   | Register a new user                    |
+| `/login?username:&password`   |POST  | Returns token for authentication
 | `/users/:username`            | PUT    | Update user details                    |
 | `/users/:username/movies/:id` | POST   | Add a movie to a user's favorites      |
 | `/users/:username/movies/:id` | DELETE | Remove a movie from a user's favorites |

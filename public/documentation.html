@@ -86,18 +86,18 @@
             <td>POST</td>
             <td>None (URL parameter)</td>
             <td>None</td>
-            <td>JSON object with required fields.</td>
+            <td>JSON object with new user's data. If a field is faulty, a 422 error is returned. If a required field is missing or already exists, a 400 error is returned..</td>
         </tr>
 
       <!--Login in new user to authenticate-->
       <tr>
         <td>Login/authenticate New User</td>
-        <td>/login</td>
+        <td>/login?username:&password:</td>
         <td>Allows a new user to register and recieve token.</td>
-        <td>Login</td>
+        <td>POST</td>
         <td>username and password</td>
         <td>None</td>
-        <td>JSON array of User with new token.</td>
+        <td> JSON object of succesful login with userId and username and token. If login fails, a 400 error is returned.</td>
     </tr>
 
 
