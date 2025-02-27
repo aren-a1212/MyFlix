@@ -10,7 +10,7 @@
     <h2>WHAT THE APP CAN DO:</h2>
 <p>The web
     application will provide users with access to information about different
-    movies, directors, and genres. Users will be able to sign up, update their
+    movies, directors, and genres.User must create a login and recieve a token  to access the app. Users will be able to sign up, update their
     personal information, and create a list of their favorite movies.</p>
 <h3>URL ENDPOINT AND THEIR METHOD:</h3>
 <table>
@@ -34,17 +34,17 @@
             <td>GET</td>
             <td>None</td>
             <td>None</td>
-            <td>JSON of movie array</td>
+            <td>JSON of movie array.If no movies are avialable returns a 500 error</td>
         </tr>
         <!--Get movie by title--->
         <tr>
-            <td>Get Movies by Movie Title</td>
+            <td>Get a specific movie by title</td>
             <td>/movies/:title</td>
             <td>Returns a movie by its specified title</td>
             <td>GET</td>
             <td>title (URL parameter)</td>
             <td>None</td>
-            <td>JSON obejct with movie</td>
+            <td>JSON obejct with specific movie. If movie is not found returns a 404 error.</td>
         </tr>
         <!--Get movie by genre-->
         <tr>
@@ -54,7 +54,7 @@
             <td>GET</td>
             <td>name (URL parameter)</td>
             <td>None</td>
-            <td>JSON object with genre name</td>
+            <td>JSON object with details about a genre,including movies of that genre. If no mvoies are found a 404 error is returned.</td>
         </tr>
         <!--Get movie by director name-->
         <tr>
@@ -64,7 +64,7 @@
             <td>GET</td>
             <td>name (URL parameter)</td>
             <td>None</td>
-            <td>JSON object about director and movie they directed</td>
+            <td>JSON object about director and movie they directed. If no movie found returns error.</td>
         </tr>
 
          <!--Gets all existing users-->
@@ -75,10 +75,8 @@
             <td>GET</td>
             <td>None (URL parameter)</td>
             <td>None</td>
-            <td>JSON object with information</td>
+            <td>JSON object with information. If no users to display a 404 error is returned.</td>
         </tr>
-
-
 
         <!--Create a new user-->
         <tr>
@@ -88,47 +86,62 @@
             <td>POST</td>
             <td>None (URL parameter)</td>
             <td>None</td>
-            <td>JSON object with information</td>
+            <td>JSON object with required fields.</td>
         </tr>
+
+      <!--Login in new user to authenticate-->
+      <tr>
+        <td>Login/authenticate New User</td>
+        <td>/login</td>
+        <td>Allows a new user to register and recieve token.</td>
+        <td>Login</td>
+        <td>username and password</td>
+        <td>None</td>
+        <td>JSON array of User with new token.</td>
+    </tr>
+
+
+
+
         <!--Update user info-->
         <tr>
-            <td>Update a User Name</td>
+            <td>Update user information by User Name</td>
             <td>/users/:username</td>
             <td>Allows a user to update name and other info</td>
             <td>PUT</td>
             <td>Username (URL parameter)</td>
             <td>JSON object with updated user info</td>
-            <td>Confirmation message</td>
+            <td>JSON object with updated information. If a field is faulty, a 422 error is returned. If a required field is missing or already exists, a 400 error is returned</td>
         </tr>
         <!--Add movie to Users favorites-->
         <tr>
-            <td>Add a Favorite Movie</td>
+            <td>Add a movie to User's favourites list</td>
             <td>/users/:username/movieid</td>
             <td>Allows a user to add a favorite movie</td>
             <td>POST</td>
             <td>username, movieid (URL parameter)</td>
             <td>JSON object with movie title</td>
-            <td>Updated list of favorite movies</td>
+            <td>If the user and movie both exist, the movie is added to the user's favorites list. If the movie is already on the list, a 400 error is returned. If either the user or movie is not found, a 404 error is returned.</td>
         </tr>
         <!--Delete a user's favorite movie-->
         <tr>
-            <td>Remove a Movie From Favorites</td>
+            <td>Remove a movie from user's favourites list</td>
             <td>/users/:username/movieid</td>
             <td>Allows a user to remove movies from the favorite list</td>
             <td>DELETE</td>
             <td>username, movieid</td>
             <td>None</td>
-            <td>Updated list of favorite movies or confirmation message</td>
+            <td> If the user and movie both exist, the movie is removed from the user's favorites list. If either user or movie is not found, a 404 error is returned.</td>
         </tr>
         <!--Deregister a user-->
         <tr>
-            <td>Delete a User</td>
+            <td>Delete a User by usernmae</td>
             <td>/users/:username</td>
             <td>Allows a user to be deleted</td>
             <td>DELETE</td>
             <td>username (URL parameter)</td>
             <td>None</td>
-            <td>Confirmation or error message</td>
+            <td> If the user exists, they are removed and a confirmation message is returned. If the user does not exist, a 404 error is returned.</td>
         </tr>
     </tbody>
 </table>
