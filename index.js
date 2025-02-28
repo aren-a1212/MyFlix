@@ -54,7 +54,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
     check('username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
     check('password', 'Password is required').not().isEmpty(),
     check('password', 'Password must be at least 8 characters long').isLength({ min: 8 }),
-    check('Email', 'Email does not appear to be valid').isEmail()
+    check('email', 'Email does not appear to be valid').isEmail()
   ], async (req, res) => {
     // Validate request body
     const errors = validationResult(req);
@@ -78,7 +78,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
         lastName: req.body.lastName,
         username: req.body.username,
         password: hashedPassword,
-        Email: req.body.Email,
+        email: req.body.email,
         Birthday: req.body.Birthday
       });
   
@@ -113,7 +113,7 @@ app.get('/users',passport.authenticate('jwt', { session: false }),async (req, re
         lastName:req.body.lastName,
         username:req.body.username,
         password: hashedPassword,
-        Email: req.body.Email,
+        email: req.body.email,
         Birthday: req.body.Birthday
       }
   },
