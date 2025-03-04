@@ -35,16 +35,16 @@ app.use(cors({
 }));
 
 //get all users 
-app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
-  await Users.find()
-    .then((users) => {
-      res.status(201).json(users);
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send('Error: ' + err);
-    });
-});
+//app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
+ // await Users.find()
+   // .then((users) => {
+  //    res.status(201).json(users);
+  //  })
+   // .catch((err) => {
+  ///    console.error(err);
+   //   res.status(500).send('Error: ' + err);
+ //   });
+//});
   
   //Creates new users
   app.post('/users', [
@@ -186,7 +186,7 @@ app.delete('/users/:username',passport.authenticate("jwt", { session: false }),a
 
 
 // Return data (description, genre, director, image URL, whether it’s featured or not) about a single movie by title to the user;
-app.get('/movie/:title',passport.authenticate('jwt', { session: false }), async (req , res) =>{
+app.get('/movies/:title',passport.authenticate('jwt', { session: false }), async (req , res) =>{
 await Movies.findOne({title: req.params.title})
 .then((movie)=>{
   res.status(200).json(movie);
