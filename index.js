@@ -187,7 +187,7 @@ app.delete('/users/:username',passport.authenticate("jwt", { session: false }),a
 
 // Return data (description, genre, director, image URL, whether it’s featured or not) about a single movie by title to the user;
 app.get('/movie/:title',passport.authenticate('jwt', { session: false }), async (req , res) =>{
-Movies.findOne({title: req.params.title})
+await Movies.findOne({title: req.params.title})
 .then((movie)=>{
   res.status(200).json(movie);
 })
