@@ -21,7 +21,7 @@ require('./passport.js');
 
 app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get started!</p> <p><a href="/documentation.html">Click here to view the Documentation page</a></p>`);});
 
-const allowedOrigins = ['http://localhost:8080', 'https://movies-fix-b2e97731bf8c.herokuapp.com/'];
+const allowedOrigins = ['http://localhost:8080', 'http://localhost:1234','https://movies-fix-b2e97731bf8c.herokuapp.com/'];
 
 app.use(cors({
   origin: (origin, callback) => {
