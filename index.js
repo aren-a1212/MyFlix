@@ -31,7 +31,10 @@ app.use(cors({
       return callback(new Error(message ), false);
     }
     return callback(null, true);
-  }
+  }, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+  allowedHeaders: ['Content-Type', 'Authorization'], 
+  credentials: true, 
 }));
 
 //get all users 
