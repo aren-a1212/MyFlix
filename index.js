@@ -36,6 +36,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'], 
   credentials: true, 
 }));
+app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 //get all users 
