@@ -32,12 +32,11 @@ app.use(cors({
     }
     return callback(null, true);
   }, 
-  methods: ['GET', 'POST', 'PUT', 'DELETE','OPTIONS'], 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], 
   allowedHeaders: ['Content-Type', 'Authorization'], 
   credentials: true, 
 }));
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
 
 //get all users 
 //app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
