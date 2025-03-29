@@ -26,7 +26,7 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
 const allowedOrigins = [
   "http://localhost:8080",
   "http://localhost:1234", 
-  "https://movies-fix-b2e97731bf8c.herokuapp.com/"
+  "https://movies-fix-b2e97731bf8c.herokuapp.com"
 ];
 
 app.use(cors({
@@ -34,6 +34,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS blocked for origin: ${origin}`); 
       callback(new Error(`CORS policy does not allow access from origin ${origin}`), false);
     }
   },
