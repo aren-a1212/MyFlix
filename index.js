@@ -15,6 +15,21 @@ app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const cors = require('cors');
+
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "http://localhost:1234",
+      "https://movies-fix-b2e97731bf8c.herokuapp.com"
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 let auth = require('./auth.js')(app);
 const passport = require('passport');
 require('./passport.js');
@@ -23,23 +38,6 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
 
 
 
-const allowedOrigins = [
-  "http://localhost:8080",
-  "http://localhost:1234", 
-  "https://movies-fix-b2e97731bf8c.herokuapp.com"
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS blocked for origin: ${origin}`); 
-      callback(new Error(`CORS policy does not allow access from origin ${origin}`), false);
-    }
-  },
-  credentials: true
-}));
 
 
 
