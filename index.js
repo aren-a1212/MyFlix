@@ -103,36 +103,50 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
   check(
     "username",
     "Username contains non alphanumeric characters - not allowed."
-  ).isAlphanumeric(),], async (req, res) => {
-    let errors = validationResult(req);
+  ).isAlphanumeric()], async (req, res) => {
+    try {
+      // Validate input
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+      }
 
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
-    }
-  let hashedPassword = Users.hashPassword(req.body.password);
-
-
-  await Users.findOneAndUpdate({ username: req.params.username }, {
-      $set:
-      {
-        firstName:req.body.firstName,
-        lastName:req.body.lastName,
-        username:req.body.username,
+      // Prepare update data
+      const updateData = {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        username: req.body.username,
         email: req.body.email,
-        Birthday: req.body.Birthday,
-        ...(req.body.password && req.body.password.trim() !== '' && { password: Users.hashPassword(req.body.password) })
-      },
-  },
-  
-      { new: true }) // This line makes sure that the updated document is returned
-      .then((updatedUser) => {
-          res.json(updatedUser);
-      })
-      .catch((err) => {
-          console.log(err);
-          res.status(500).send('Error: ' + err);
-      });
-});
+        Birthday: req.body.Birthday
+      };
+
+      // Only update password if provided and not empty
+      if (req.body.password && req.body.password.trim() !== '') {
+        updateData.password = Users.hashPassword(req.body.password);
+      }
+
+      // Perform update
+      const updatedUser = await Users.findOneAndUpdate(
+        { username: req.params.username },
+        { $set: updateData },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(404).send('User not found');
+      }
+
+      // Return user without password hash
+      const userWithoutPassword = updatedUser.toObject();
+      delete userWithoutPassword.password;
+      res.json(userWithoutPassword);
+
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error: ' + err.message);
+    }
+  }
+);
     
  // Allow users to remove a movie to their list of favorites 
 app.delete('/users/:username/:movieid',passport.authenticate('jwt', { session: false }), async(req , res) =>{
