@@ -103,8 +103,7 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
   check(
     "username",
     "Username contains non alphanumeric characters - not allowed."
-  ).isAlphanumeric(),
-  check("password", "Password is required").not().isEmpty()], async (req, res) => {
+  ).isAlphanumeric(),], async (req, res) => {
     let errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -119,11 +118,12 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
         firstName:req.body.firstName,
         lastName:req.body.lastName,
         username:req.body.username,
-        password: hashedPassword,
         email: req.body.email,
-        Birthday: req.body.Birthday
-      }
+        Birthday: req.body.Birthday,
+        ...(req.body.password && req.body.password.trim() !== '' && { password: Users.hashPassword(req.body.password) })
+      },
   },
+  
       { new: true }) // This line makes sure that the updated document is returned
       .then((updatedUser) => {
           res.json(updatedUser);
