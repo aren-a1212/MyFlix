@@ -61,10 +61,10 @@ app.get(
   async (req, res) => {
     // Conditionto check added here
     if (
-      req.user.Username === req.params.username ||
-      req.user.Username === ""
+      req.user.username === req.params.username ||
+      req.user.username === ""
     ) {
-      await Users.findOne({ Username: req.params.Username })
+      await Users.findOne({ username: req.params.username })
         .then((user) => {
           if (user) {
             res.json(user);
