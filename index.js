@@ -44,16 +44,51 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
 
 
 //get all users 
-//app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
- // await Users.find()
-   // .then((users) => {
-  //    res.status(201).json(users);
-  //  })
-   // .catch((err) => {
-  ///    console.error(err);
-   //   res.status(500).send('Error: ' + err);
- //   });
-//});
+app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
+ await Users.find()
+    .then((users) => {
+      res.status(201).json(users);
+    })
+    .catch((err) => {
+     console.error(err);
+     res.status(500).send('Error: ' + err);
+   });
+});
+
+app.get(
+  "/users/:username",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    // Conditionto check added here
+    if (
+      req.user.Username === req.params.username ||
+      req.user.Username === ""
+    ) {
+      await Users.findOne({ Username: req.params.Username })
+        .then((user) => {
+          if (user) {
+            res.json(user);
+          } else {
+            res
+              .status(404)
+              .send(
+                "User with the username " +
+                  req.params.username +
+                  " was not found."
+              );
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(500).send("Error: " + err);
+        });
+    } else {
+      return res.status(400).send("Permission denied");
+    }
+  }
+);
+
+
   
   //Creates new users
   app.post('/users', [
