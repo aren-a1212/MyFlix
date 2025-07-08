@@ -20,7 +20,8 @@ app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
       "http://localhost:1234",
-      "http://localhost:4200",      
+      "http://localhost:4200",  
+      'https://aren-a1212.github.io',     
       "https://movies-fix-b2e97731bf8c.herokuapp.com",
      "https://arenmyflix.netlify.app"
     ];
