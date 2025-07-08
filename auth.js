@@ -1,3 +1,9 @@
+/**
+ * Authentication module for handling JWT-based user authentication
+ * @module auth
+ */
+
+
 const jwtSecret = 'SECRET_KEY';
 
 const jwt = require('jsonwebtoken'),
@@ -12,7 +18,12 @@ let generateJWTToken =(user)=>{
         algorithm: 'HS256'
     });
 }
-
+/**
+ * Authentication setup function
+ * @function
+ * @param {express.Router} router - Express router instance
+ * @returns {void}
+ */
 module.exports = (router) => {
     router.post('/login', (req, res) => {
       passport.authenticate('local', { session: false }, (error, user, info) => {
