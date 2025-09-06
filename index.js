@@ -40,7 +40,8 @@ app.use(cors({
       "http://localhost:4200",  
       'https://aren-a1212.github.io',     
       "https://movies-fix-b2e97731bf8c.herokuapp.com",
-     "https://arenmyflix.netlify.app"
+     "https://arenmyflix.netlify.app",
+      "http://54.147.37.43",
     ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
