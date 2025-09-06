@@ -8,5 +8,22 @@
 </head>
 <body>
     <h1>MYFLIX!</h1>
+
+<div class="s3-integration-section">
+    <h3>Media Management</h3>
+    
+    <div class="upload-area">
+        <input type="file" id="s3FileInput" style="display: none;">
+        <button onclick="document.getElementById('s3FileInput').click()">Select File</button>
+        <span id="selectedFileName"></span>
+        <button onclick="uploadToS3()">Upload to Cloud</button>
+    </div>
+    
+    <div class="file-list">
+        <h4>Uploaded Files</h4>
+        <button onclick="refreshFileList()">Refresh List</button>
+        <ul id="s3FileList"></ul>
+    </div>
+</div>
 </body>
 </html>

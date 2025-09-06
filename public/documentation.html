@@ -5,8 +5,79 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
 	<title>MYFLIX App</title>
+
+<style>
+
+.s3-integration-section {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.upload-area {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.file-list {
+    margin-top: 20px;
+}
+
+.file-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.file-list li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+
+
+
+</style>
+
+
+
+
 </head>
 <body>
+
+<div class="s3-integration-section">
+    <h3>Media Management</h3>
+    
+    <div class="upload-area">
+        <input type="file" id="s3FileInput" style="display: none;">
+        <button class="btn" onclick="document.getElementById('s3FileInput').click()">
+            Select File
+        </button>
+        <span id="selectedFileName"></span>
+    </div>
+    
+    <button class="btn btn-success" onclick="uploadToS3()">
+        Upload to Cloud
+    </button>
+    
+    <div class="file-list">
+        <h4>Uploaded Files</h4>
+        <button class="btn" onclick="refreshFileList()">
+            Refresh List
+        </button>
+        <ul id="s3FileList"></ul>
+    </div>
+</div>
+
     <h2>WHAT THE APP CAN DO:</h2>
 <p>The web
     application will provide users with access to information about different
@@ -145,6 +216,111 @@
         </tr>
     </tbody>
 </table>
+          
+
+        <script>
+            let selectedFile = null;
+
+document.getElementById('s3FileInput').addEventListener('change', function(e) {
+    selectedFile = e.target.files[0];
+    document.getElementById('selectedFileName').textContent = selectedFile.name;
+});
+
+async function uploadToS3() {
+    if (!selectedFile) {
+        alert('Please select a file first');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+        // Get JWT token from where you store it (localStorage, cookie, etc.)
+        const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+        
+        const response = await fetch('/api/s3/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        alert(result.message);
+        refreshFileList();
+    } catch (error) {
+        alert('Upload failed: ' + error.message);
+    }
+}
+
+async function refreshFileList() {
+    try {
+        // Get JWT token from where you store it
+        const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+        
+        const response = await fetch('/api/s3/objects', {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        
+        const files = await response.json();
+        
+        const fileList = document.getElementById('s3FileList');
+        fileList.innerHTML = '';
+        
+        files.forEach(file => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                ${file.Key} 
+                <div>
+                    <button class="btn" onclick="downloadFile('${file.Key}')">
+                        Download
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteFile('${file.Key}')">
+                        Delete
+                    </button>
+                </div>
+            `;
+            fileList.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Failed to fetch file list:', error);
+    }
+}
+
+function downloadFile(key) {
+    window.open(`/api/s3/download/${key}`, '_blank');
+}
+
+async function deleteFile(key) {
+    if (confirm(`Are you sure you want to delete "${key}"?`)) {
+        try {
+            // Get JWT token from where you store it
+            const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+            
+            const response = await fetch(`/api/s3/delete/${key}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            
+            const result = await response.json();
+            alert(result.message);
+            refreshFileList();
+        } catch (error) {
+            alert('Delete failed: ' + error.message);
+        }
+    }
+}
+
+// Initial load
+refreshFileList();
+        </script>
+
 </body>
 </html>
 

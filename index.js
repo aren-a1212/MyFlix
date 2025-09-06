@@ -1,3 +1,7 @@
+const fileUpload = require('express-fileupload');
+const { S3Client, ListObjectsV2Command, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+
 const mongoose = require('mongoose');
 const Models = require('./models.js');
 const Movies = Models.Movie;
@@ -16,6 +20,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const cors = require('cors');
 
+app.use(fileUpload());
+
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'us-east-1',
+    // forcePathStyle: true,
+});
+const BUCKET_NAME = process.env.BUCKET_NAME || 'myflix-media-bucket';
 /**
  * CORS configuration with allowed origins
  * @type {import('cors').CorsOptions}
@@ -368,6 +379,131 @@ app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }),
       res.status(500).send("Error");
     });
   });
+
+
+
+  // S3 Routes
+/**
+ * GET: List all objects in S3 bucket
+ * @name GET /api/s3/objects
+ * @requires passport authentication
+ * @returns {Object[]} objects - Array of S3 objects
+ */
+app.get('/api/s3/objects', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const command = new ListObjectsV2Command({
+            Bucket: BUCKET_NAME
+        });
+        const data = await s3Client.send(command);
+        res.json(data.Contents || []);
+    } catch (error) {
+        console.error('S3 List Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST: Upload file to S3 bucket
+ * @name POST /api/s3/upload
+ * @requires passport authentication
+ * @returns {Object} result - Upload result with filename
+ */
+app.post('/api/s3/upload', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        if (!req.files || !req.files.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const file = req.files.file;
+        const fileName = `${Date.now()}-${file.name}`;
+
+        const uploadParams = {
+            Bucket: BUCKET_NAME,
+            Key: fileName,
+            Body: file.data,
+            ContentType: file.mimetype
+        };
+
+        const command = new PutObjectCommand(uploadParams);
+        await s3Client.send(command);
+
+        // Store file reference in user document
+        if (req.user && req.user.username) {
+            await Users.findOneAndUpdate(
+                { username: req.user.username },
+                { $push: { uploadedFiles: fileName } },
+                { new: true }
+            );
+        }
+
+        res.json({ message: 'File uploaded successfully', fileName });
+    } catch (error) {
+        console.error('S3 Upload Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET: Download file from S3 bucket
+ * @name GET /api/s3/download/:key
+ * @param {string} key - URL parameter (filename)
+ * @returns {file} file - The requested file
+ */
+app.get('/api/s3/download/:key', async (req, res) => {
+    try {
+        const key = req.params.key;
+        const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key
+        });
+
+        const data = await s3Client.send(command);
+        
+        // Set appropriate headers
+        res.setHeader('Content-Disposition', `attachment; filename="${key}"`);
+        if (data.ContentType) {
+            res.setHeader('Content-Type', data.ContentType);
+        }
+        
+        data.Body.pipe(res);
+    } catch (error) {
+        console.error('S3 Download Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * DELETE: Delete file from S3 bucket
+ * @name DELETE /api/s3/delete/:key
+ * @param {string} key - URL parameter (filename)
+ * @requires passport authentication
+ * @returns {Object} result - Delete operation result
+ */
+app.delete('/api/s3/delete/:key', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const key = req.params.key;
+        const command = new DeleteObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key
+        });
+
+        await s3Client.send(command);
+
+        // Remove file reference from user document
+        if (req.user && req.user.username) {
+            await Users.findOneAndUpdate(
+                { username: req.user.username },
+                { $pull: { uploadedFiles: key } },
+                { new: true }
+            );
+        }
+
+        res.json({ message: 'File deleted successfully', fileName: key });
+    } catch (error) {
+        console.error('S3 Delete Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 
  /**
