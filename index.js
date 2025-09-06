@@ -389,7 +389,7 @@ app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }),
  * @requires passport authentication
  * @returns {Object[]} objects - Array of S3 objects
  */
-app.get('/api/s3/objects', passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.get('/api/s3/objects', async (req, res) => {
     try {
         const command = new ListObjectsV2Command({
             Bucket: BUCKET_NAME
@@ -408,7 +408,7 @@ app.get('/api/s3/objects', passport.authenticate('jwt', { session: false }), asy
  * @requires passport authentication
  * @returns {Object} result - Upload result with filename
  */
-app.post('/api/s3/upload', passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.post('/api/s3/upload', async (req, res) => {
     try {
         if (!req.files || !req.files.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -427,21 +427,15 @@ app.post('/api/s3/upload', passport.authenticate('jwt', { session: false }), asy
         const command = new PutObjectCommand(uploadParams);
         await s3Client.send(command);
 
-        // Store file reference in user document
-        if (req.user && req.user.username) {
-            await Users.findOneAndUpdate(
-                { username: req.user.username },
-                { $push: { uploadedFiles: fileName } },
-                { new: true }
-            );
-        }
-
         res.json({ message: 'File uploaded successfully', fileName });
     } catch (error) {
         console.error('S3 Upload Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+       
+        
 
 /**
  * GET: Download file from S3 bucket
@@ -459,7 +453,6 @@ app.get('/api/s3/download/:key', async (req, res) => {
 
         const data = await s3Client.send(command);
         
-        // Set appropriate headers
         res.setHeader('Content-Disposition', `attachment; filename="${key}"`);
         if (data.ContentType) {
             res.setHeader('Content-Type', data.ContentType);
@@ -471,7 +464,6 @@ app.get('/api/s3/download/:key', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 /**
  * DELETE: Delete file from S3 bucket
  * @name DELETE /api/s3/delete/:key
@@ -479,7 +471,7 @@ app.get('/api/s3/download/:key', async (req, res) => {
  * @requires passport authentication
  * @returns {Object} result - Delete operation result
  */
-app.delete('/api/s3/delete/:key', passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.delete('/api/s3/delete/:key', async (req, res) => {
     try {
         const key = req.params.key;
         const command = new DeleteObjectCommand({
@@ -488,16 +480,6 @@ app.delete('/api/s3/delete/:key', passport.authenticate('jwt', { session: false 
         });
 
         await s3Client.send(command);
-
-        // Remove file reference from user document
-        if (req.user && req.user.username) {
-            await Users.findOneAndUpdate(
-                { username: req.user.username },
-                { $pull: { uploadedFiles: key } },
-                { new: true }
-            );
-        }
-
         res.json({ message: 'File deleted successfully', fileName: key });
     } catch (error) {
         console.error('S3 Delete Error:', error);

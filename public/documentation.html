@@ -236,45 +236,46 @@ async function uploadToS3() {
     formData.append('file', selectedFile);
     
     try {
-        // Get JWT token from where you store it (localStorage, cookie, etc.)
-        const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-        
         const response = await fetch('/api/s3/upload', {
             method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token
-            },
             body: formData
         });
+        
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
         
         const result = await response.json();
         alert(result.message);
         refreshFileList();
     } catch (error) {
+        console.error('Upload error:', error);
         alert('Upload failed: ' + error.message);
     }
 }
 
 async function refreshFileList() {
     try {
-        // Get JWT token from where you store it
-        const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+        const response = await fetch('/api/s3/objects');
         
-        const response = await fetch('/api/s3/objects', {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
+        }
         
         const files = await response.json();
         
         const fileList = document.getElementById('s3FileList');
         fileList.innerHTML = '';
         
+        if (files.length === 0) {
+            fileList.innerHTML = '<li>No files found</li>';
+            return;
+        }
+        
         files.forEach(file => {
             const li = document.createElement('li');
             li.innerHTML = `
-                ${file.Key} 
+                <span>${file.Key}</span>
                 <div>
                     <button class="btn" onclick="downloadFile('${file.Key}')">
                         Download
@@ -288,6 +289,7 @@ async function refreshFileList() {
         });
     } catch (error) {
         console.error('Failed to fetch file list:', error);
+        alert('Failed to load files. Please try again.');
     }
 }
 
@@ -296,24 +298,25 @@ function downloadFile(key) {
 }
 
 async function deleteFile(key) {
-    if (confirm(`Are you sure you want to delete "${key}"?`)) {
-        try {
-            // Get JWT token from where you store it
-            const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-            
-            const response = await fetch(`/api/s3/delete/${key}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
-            
-            const result = await response.json();
-            alert(result.message);
-            refreshFileList();
-        } catch (error) {
-            alert('Delete failed: ' + error.message);
+    if (!confirm(`Are you sure you want to delete "${key}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/s3/delete/${key}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Delete failed: ${response.status} ${response.statusText}`);
         }
+        
+        const result = await response.json();
+        alert(result.message);
+        refreshFileList();
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert('Delete failed: ' + error.message);
     }
 }
 
