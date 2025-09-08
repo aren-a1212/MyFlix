@@ -23,8 +23,8 @@ const cors = require('cors');
 app.use(fileUpload());
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'us-east-1',
-    // forcePathStyle: true,
+  region: process.env.AWS_REGION || 'us-east-1',
+  // forcePathStyle: true,
 });
 const BUCKET_NAME = process.env.BUCKET_NAME || 'myflix-media-bucket';
 /**
@@ -37,11 +37,11 @@ app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
       "http://localhost:1234",
-      "http://localhost:4200",  
-      'https://aren-a1212.github.io',     
+      "http://localhost:4200",
+      'https://aren-a1212.github.io',
       "https://movies-fix-b2e97731bf8c.herokuapp.com",
-     "https://arenmyflix.netlify.app",
-      "http://54.147.37.43",
+      "https://arenmyflix.netlify.app",
+      "http://54.147.37.43"
     ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -63,11 +63,134 @@ require('./passport.js');
  * @name GET /
  * @returns {string} HTML welcome message
  */
-app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get started!</p> <p><a href="/documentation.html">Click here to view the Documentation page</a></p>`);});
+app.get("/", (req, res) => {
+  res.send(`
+    <h1>Welcome to Myflix!!</h1>
+    <p>Lets get started!</p>
+    <p><a href="/documentation.html">Click here to view the Documentation page</a></p>
+    <p><a href="/gallery.html">View Image Gallery</a></p>
+  `);
+});
 
-
-
-
+app.get("/gallery.html", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Image Gallery</title>
+      <style>
+        .gallery {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 15px;
+          padding: 20px;
+        }
+        .gallery-item {
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 5px;
+          text-align: center;
+        }
+        .gallery-item img {
+          max-width: 100%;
+          height: auto;
+        }
+        .upload-section {
+          padding: 20px;
+          background: #f5f5f5;
+          margin-bottom: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="upload-section">
+        <h2>Upload New Image</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+          <input type="file" name="file" required>
+          <button type="submit">Upload</button>
+        </form>
+        <div id="uploadStatus"></div>
+      </div>
+      
+      <h2>Image Gallery</h2>
+      <div class="gallery" id="imageGallery"></div>
+      
+      <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData();
+          formData.append('file', e.target.file.files[0]);
+          
+          try {
+            const response = await fetch('/api/s3/upload', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (response.ok) {
+              document.getElementById('uploadStatus').textContent = 'Upload successful!';
+              loadGallery();
+            } else {
+              document.getElementById('uploadStatus').textContent = 'Upload failed';
+            }
+          } catch (error) {
+            document.getElementById('uploadStatus').textContent = 'Upload error: ' + error.message;
+          }
+        });
+        
+        async function loadGallery() {
+          try {
+            const response = await fetch('/api/s3/gallery');
+            const images = await response.json();
+            
+            const gallery = document.getElementById('imageGallery');
+            gallery.innerHTML = '';
+            
+            images.forEach(image => {
+              const item = document.createElement('div');
+              item.className = 'gallery-item';
+              item.innerHTML = \`
+                <img src="\${image.url}" alt="\${image.name}">
+                <p>\${image.name}</p>
+                <button onclick="downloadImage('\${image.name}')">Download</button>
+                <button onclick="deleteImage('\${image.name}')">Delete</button>
+              \`;
+              gallery.appendChild(item);
+            });
+          } catch (error) {
+            console.error('Error loading gallery:', error);
+          }
+        }
+        
+        function downloadImage(key) {
+          window.open(\`/api/s3/download/\${key}\`, '_blank');
+        }
+        
+        async function deleteImage(key) {
+          if (confirm('Are you sure you want to delete this image?')) {
+            try {
+              const response = await fetch(\`/api/s3/delete/\${key}\`, {
+                method: 'DELETE'
+              });
+              
+              if (response.ok) {
+                loadGallery();
+              } else {
+                alert('Delete failed');
+              }
+            } catch (error) {
+              console.error('Delete error:', error);
+            }
+          }
+        }
+        
+        // Load gallery on page load
+        loadGallery();
+      </script>
+    </body>
+    </html>
+  `);
+});
 
 
 /**
@@ -76,15 +199,15 @@ app.get("/", (req, res) => {res.send(`<h1>Welcome to Myflix!!</h1>- <p>Lets get 
  * @requires passport authentication
  * @returns {Object[]} users - Array of user objects
  */
-app.get('/users',passport.authenticate('jwt', { session: false }),async (req, res) => {
- await Users.find()
+app.get('/users', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Users.find()
     .then((users) => {
       res.status(201).json(users);
     })
     .catch((err) => {
-     console.error(err);
-     res.status(500).send('Error: ' + err);
-   });
+      console.error(err);
+      res.status(500).send('Error: ' + err);
+    });
 });
 /**
  * GET: User by username
@@ -97,7 +220,7 @@ app.get(
   "/users/:username",
   passport.authenticate("jwt", { session: false }),
   async (req, res) => {
- 
+
     if (
       req.user.username === req.params.username ||
       req.user.username === ""
@@ -111,8 +234,8 @@ app.get(
               .status(404)
               .send(
                 "User with the username " +
-                  req.params.username +
-                  " was not found."
+                req.params.username +
+                " was not found."
               );
           }
         })
@@ -127,7 +250,7 @@ app.get(
 );
 
 
-  
+
 /**
  * POST: Create new user
  * @name POST /users
@@ -138,48 +261,48 @@ app.get(
  * @param {string} email - Valid email format
  * @returns {Object} user - Created user object
  */
-  app.post('/users', [
-    check('username', 'Username is required').isLength({ min: 5 }),
-    check('firstName', 'firstName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('lastName', 'lastName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
-    check('password', 'Password is required').not().isEmpty(),
-    check('password', 'Password must be at least 8 characters long').isLength({ min: 8 }),
-    check('email', 'Email does not appear to be valid').isEmail()
-  ], async (req, res) => {
-    // Validate request body
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(422).json({ errors: errors.array() });
+app.post('/users', [
+  check('username', 'Username is required').isLength({ min: 5 }),
+  check('firstName', 'firstName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+  check('lastName', 'lastName contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+  check('username', 'Username contains non-alphanumeric characters - not allowed.').isAlphanumeric(),
+  check('password', 'Password is required').not().isEmpty(),
+  check('password', 'Password must be at least 8 characters long').isLength({ min: 8 }),
+  check('email', 'Email does not appear to be valid').isEmail()
+], async (req, res) => {
+  // Validate request body
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  try {
+
+    const existingUser = await Users.findOne({ username: req.body.username });
+    if (existingUser) {
+      return res.status(400).send(req.body.username + ' already exists');
     }
-  
-    try {
-     
-      const existingUser = await Users.findOne({ username: req.body.username });
-      if (existingUser) {
-        return res.status(400).send(req.body.username + ' already exists');
-      }
-  
-     
-      const hashedPassword = Users.hashPassword(req.body.password);
-  
-    
-      const newUser = await Users.create({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        username: req.body.username,
-        password: hashedPassword,
-        email: req.body.email,
-        Birthday: req.body.Birthday
-      });
-  
-      
-      res.status(201).json(newUser);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error: ' + error.message);
-    }
-  });
+
+
+    const hashedPassword = Users.hashPassword(req.body.password);
+
+
+    const newUser = await Users.create({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      username: req.body.username,
+      password: hashedPassword,
+      email: req.body.email,
+      Birthday: req.body.Birthday
+    });
+
+
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error: ' + error.message);
+  }
+});
 /**
  * PUT: Update user
  * @name PUT /users/:username
@@ -187,20 +310,20 @@ app.get(
  * @requires passport authentication
  * @returns {Object} user - Updated user object
  */
- app.put('/users/:username', passport.authenticate('jwt', { session: false }),[
+app.put('/users/:username', passport.authenticate('jwt', { session: false }), [
   check("username", "username is required").isLength({ min: 5 }),
   check(
     "username",
     "Username contains non alphanumeric characters - not allowed."
   ).isAlphanumeric()], async (req, res) => {
     try {
-    
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
       }
 
-  
+
       const updateData = {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -213,13 +336,13 @@ app.get(
         updateData.password = Users.hashPassword(req.body.password);
       }
 
-    /**
- * PUT: Update user
- * @name PUT /users/:username
- * @param {string} username - URL parameter
- * @requires passport authentication
- * @returns {Object} user - Updated user object
- */
+      /**
+   * PUT: Update user
+   * @name PUT /users/:username
+   * @param {string} username - URL parameter
+   * @requires passport authentication
+   * @returns {Object} user - Updated user object
+   */
       const updatedUser = await Users.findOneAndUpdate(
         { username: req.params.username },
         { $set: updateData },
@@ -249,18 +372,18 @@ app.get(
  * @requires passport authentication
  * @returns {Object} user - Updated user object
  */
-app.delete('/users/:username/:movieid',passport.authenticate('jwt', { session: false }), async(req , res) =>{
-   Users.findOneAndUpdate({ username: req.params.username }, {
+app.delete('/users/:username/:movieid', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  Users.findOneAndUpdate({ username: req.params.username }, {
     $pull: { favoriteMovies: req.params.movieid }
   },
-  { new: true }) 
- .then((updatedUser) => {
-   res.json(updatedUser);
- })
- .catch((err) => {
-   console.error(err);
-   res.status(500).send("Error: + err");
- });
+    { new: true })
+    .then((updatedUser) => {
+      res.json(updatedUser);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error: + err");
+    });
 });
 
 
@@ -272,18 +395,18 @@ app.delete('/users/:username/:movieid',passport.authenticate('jwt', { session: f
  * @requires passport authentication
  * @returns {Object} user - Updated user object
  */
- app.post('/users/:username/:movieid',passport.authenticate('jwt', { session: false }), async (req, res) => {
+app.post('/users/:username/:movieid', passport.authenticate('jwt', { session: false }), async (req, res) => {
   await Users.findOneAndUpdate({ username: req.params.username }, {
-     $push: { favoriteMovies: req.params.movieid }
-   },
-   { new: true }) 
-  .then((updatedUser) => {
-    res.json(updatedUser);
-  })
-  .catch((err) => {
-    console.error(err);
-    res.status(500).send("Error: + err");
-  });
+    $push: { favoriteMovies: req.params.movieid }
+  },
+    { new: true })
+    .then((updatedUser) => {
+      res.json(updatedUser);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error: + err");
+    });
 });
 
 /**
@@ -293,19 +416,19 @@ app.delete('/users/:username/:movieid',passport.authenticate('jwt', { session: f
  * @requires passport authentication
  * @returns {string} confirmation message
  */
-app.delete('/users/:username',passport.authenticate("jwt", { session: false }),async (req , res) =>{
-  Users.findOneAndDelete({username:req.params.username})
-.then((users)=>{
-  if (!users){
-    res.status(400).send(req.params.username + "No user found");
-  }else{
-    res.status(200).send(req.params.username + "User deleted");
-  }
-})  
-.catch((err)=>{
-  console.error(err);
-  res.status(500).send("Error")
-});
+app.delete('/users/:username', passport.authenticate("jwt", { session: false }), async (req, res) => {
+  Users.findOneAndDelete({ username: req.params.username })
+    .then((users) => {
+      if (!users) {
+        res.status(400).send(req.params.username + "No user found");
+      } else {
+        res.status(200).send(req.params.username + "User deleted");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error")
+    });
 });
 
 /**
@@ -314,15 +437,15 @@ app.delete('/users/:username',passport.authenticate("jwt", { session: false }),a
  * @requires passport authentication
  * @returns {Object[]} movies - Array of movie objects
  */
-  app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
-        await Movies.find()  // Fetch all movies from the database
-        .then((movies) => {
-            res.status(201).json(movies);  // Send back the list of movies
-        })
-        .catch((err) => {
-            console.error(err);
-            res.status(500).send('Error: ' + err);  // Handle errors
-        });
+app.get('/movies', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Movies.find()  // Fetch all movies from the database
+    .then((movies) => {
+      res.status(201).json(movies);  // Send back the list of movies
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('Error: ' + err);  // Handle errors
+    });
 });
 
 
@@ -333,15 +456,15 @@ app.delete('/users/:username',passport.authenticate("jwt", { session: false }),a
  * @requires passport authentication
  * @returns {Object} movie - Movie object
  */
-app.get('/movies/:title',passport.authenticate('jwt', { session: false }), async (req , res) =>{
-await Movies.findOne({title: req.params.title})
-.then((movie)=>{
-  res.status(200).json(movie);
-})
-.catch((err) =>{
-  console.error(err);
-  res.status(500).send('Error:+ err');
-});
+app.get('/movies/:title', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Movies.findOne({ title: req.params.title })
+    .then((movie) => {
+      res.status(200).json(movie);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('Error:+ err');
+    });
 });
 
 
@@ -352,15 +475,15 @@ await Movies.findOne({title: req.params.title})
  * @requires passport authentication
  * @returns {Object[]} movies - Array of movie objects
  */
-app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }), async (req , res) =>{
-   await Movies.find({"genre.name": req.params.genre})
-  .then((movie)=>{
-    res.status(200).json(movie);
-  })
-  .catch((err)=>{
-    console.error(err);
-    res.status(500).send('Error')
-  });
+app.get('/movies/genre/:genre', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Movies.find({ "genre.name": req.params.genre })
+    .then((movie) => {
+      res.status(200).json(movie);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('Error')
+    });
 });
 /**
  * GET: Director by name
@@ -369,21 +492,21 @@ app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }),
  * @requires passport authentication
  * @returns {Object} director - Director information
  */
-  app.get('/movies/director/:directorname',passport.authenticate('jwt', { session: false }),async (req , res) =>{
-    await Movies.findOne({"director.name":req.params.directorname})
-    .then((movie)=>{
+app.get('/movies/director/:directorname', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  await Movies.findOne({ "director.name": req.params.directorname })
+    .then((movie) => {
       res.status(200).json(movie);
     }
     )
-    .catch((err)=>{
+    .catch((err) => {
       console.error(err);
       res.status(500).send("Error");
     });
-  });
+});
 
 
 
-  // S3 Routes
+// S3 Routes
 /**
  * GET: List all objects in S3 bucket
  * @name GET /api/s3/objects
@@ -391,16 +514,16 @@ app.get('/movies/genre/:genre',passport.authenticate('jwt', { session: false }),
  * @returns {Object[]} objects - Array of S3 objects
  */
 app.get('/api/s3/objects', async (req, res) => {
-    try {
-        const command = new ListObjectsV2Command({
-            Bucket: BUCKET_NAME
-        });
-        const data = await s3Client.send(command);
-        res.json(data.Contents || []);
-    } catch (error) {
-        console.error('S3 List Error:', error);
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: BUCKET_NAME
+    });
+    const data = await s3Client.send(command);
+    res.json(data.Contents || []);
+  } catch (error) {
+    console.error('S3 List Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
@@ -410,33 +533,33 @@ app.get('/api/s3/objects', async (req, res) => {
  * @returns {Object} result - Upload result with filename
  */
 app.post('/api/s3/upload', async (req, res) => {
-    try {
-        if (!req.files || !req.files.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
-
-        const file = req.files.file;
-        const fileName = `${Date.now()}-${file.name}`;
-
-        const uploadParams = {
-            Bucket: BUCKET_NAME,
-            Key: fileName,
-            Body: file.data,
-            ContentType: file.mimetype
-        };
-
-        const command = new PutObjectCommand(uploadParams);
-        await s3Client.send(command);
-
-        res.json({ message: 'File uploaded successfully', fileName });
-    } catch (error) {
-        console.error('S3 Upload Error:', error);
-        res.status(500).json({ error: error.message });
+  try {
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
+
+    const file = req.files.file;
+    const fileName = `${Date.now()}-${file.name}`;
+
+    const uploadParams = {
+      Bucket: BUCKET_NAME,
+      Key: fileName,
+      Body: file.data,
+      ContentType: file.mimetype
+    };
+
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
+
+    res.json({ message: 'File uploaded successfully', fileName });
+  } catch (error) {
+    console.error('S3 Upload Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-       
-        
+
+
 
 /**
  * GET: Download file from S3 bucket
@@ -444,59 +567,109 @@ app.post('/api/s3/upload', async (req, res) => {
  * @param {string} key - URL parameter (filename)
  * @returns {file} file - The requested file
  */
+app.get('/api/s3/objects', async (req, res) => {
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: BUCKET_NAME
+    });
+    const data = await s3Client.send(command);
+    res.json(data.Contents || []);
+  } catch (error) {
+    console.error('S3 List Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Gallery endpoint - returns resized images
+app.get('/api/s3/gallery', async (req, res) => {
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: BUCKET_NAME,
+      Prefix: 'resized-images/'
+    });
+    const data = await s3Client.send(command);
+
+    const images = (data.Contents || [])
+      .filter(item => item.Key !== 'resized-images/') // Exclude the folder itself
+      .map(item => ({
+        name: item.Key.replace('resized-images/', ''),
+        url: `https://${BUCKET_NAME}.s3.amazonaws.com/${item.Key}`,
+        lastModified: item.LastModified,
+        size: item.Size
+      }));
+
+    res.json(images);
+  } catch (error) {
+    console.error('S3 Gallery Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/s3/upload', async (req, res) => {
+  try {
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const file = req.files.file;
+    const fileName = `original-images/${Date.now()}-${file.name}`;
+
+    const uploadParams = {
+      Bucket: BUCKET_NAME,
+      Key: fileName,
+      Body: file.data,
+      ContentType: file.mimetype
+    };
+
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
+
+    res.json({ message: 'File uploaded successfully', fileName });
+  } catch (error) {
+    console.error('S3 Upload Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/s3/download/:key', async (req, res) => {
-    try {
-        const key = req.params.key;
-        const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key
-        });
+  try {
+    const key = req.params.key;
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key
+    });
 
-        const data = await s3Client.send(command);
-        
-        res.setHeader('Content-Disposition', `attachment; filename="${key}"`);
-        if (data.ContentType) {
-            res.setHeader('Content-Type', data.ContentType);
-        }
-        
-        data.Body.pipe(res);
-    } catch (error) {
-        console.error('S3 Download Error:', error);
-        res.status(500).json({ error: error.message });
+    const data = await s3Client.send(command);
+
+    res.setHeader('Content-Disposition', `attachment; filename="${key}"`);
+    if (data.ContentType) {
+      res.setHeader('Content-Type', data.ContentType);
     }
+
+    data.Body.pipe(res);
+  } catch (error) {
+    console.error('S3 Download Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
-/**
- * DELETE: Delete file from S3 bucket
- * @name DELETE /api/s3/delete/:key
- * @param {string} key - URL parameter (filename)
- * @requires passport authentication
- * @returns {Object} result - Delete operation result
- */
+
 app.delete('/api/s3/delete/:key', async (req, res) => {
-    try {
-        const key = req.params.key;
-        const command = new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key
-        });
+  try {
+    const key = req.params.key;
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key
+    });
 
-        await s3Client.send(command);
-        res.json({ message: 'File deleted successfully', fileName: key });
-    } catch (error) {
-        console.error('S3 Delete Error:', error);
-        res.status(500).json({ error: error.message });
-    }
+    await s3Client.send(command);
+    res.json({ message: 'File deleted successfully', fileName: key });
+  } catch (error) {
+    console.error('S3 Delete Error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-
- /**
- * Start the server
- * @type {number}
- */
-
-
-  const port = process.env.PORT || 8080;
-  app.listen(port, '0.0.0.0',() => {
-   console.log('Listening on Port ' + port);
-  });
-
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log('Listening on Port ' + port);
+});

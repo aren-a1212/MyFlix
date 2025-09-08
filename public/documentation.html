@@ -1,329 +1,368 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width">
-	<title>MYFLIX App</title>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width">
+        <title>MYFLIX App</title>
 
-<style>
+        <style>
 
-.s3-integration-section {
-    border: 1px solid #ddd;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
+    .s3-integration-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
 
-.upload-area {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
+        .upload-area {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
 
-.file-list {
-    margin-top: 20px;
-}
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
 
-.file-list ul {
-    list-style-type: none;
-    padding: 0;
-}
+        .gallery-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+        }
 
-.file-list li {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fff;
-    margin-bottom: 5px;
-    border-radius: 4px;
-}
+        .gallery-image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
 
+        .image-details {
+            word-break: break-all;
+        }
 
+        .btn {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-</style>
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
 
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+    </head>
+    <body>
+        <div class="s3-integration-section">
+            <h3>Media Management</h3>
 
+            <div class="upload-area">
+                <input type="file" id="s3FileInput" style="display: none;">
+                <button class="btn"
+                    onclick="document.getElementById('s3FileInput').click()">
+                    Select File
+                </button>
+                <span id="selectedFileName"></span>
+            </div>
 
+            <button class="btn btn-success" onclick="uploadToS3()">
+                Upload to Cloud
+            </button>
 
-</head>
-<body>
+            <div class="file-list">
+                <h4>Image Gallery</h4>
+                <button class="btn" onclick="refreshFileList()">
+                    Refresh Gallery
+                </button>
+                <div id="s3FileList" class="gallery-container"></div>
+            </div>
+        </div>
 
-<div class="s3-integration-section">
-    <h3>Media Management</h3>
-    
-    <div class="upload-area">
-        <input type="file" id="s3FileInput" style="display: none;">
-        <button class="btn" onclick="document.getElementById('s3FileInput').click()">
-            Select File
-        </button>
-        <span id="selectedFileName"></span>
-    </div>
-    
-    <button class="btn btn-success" onclick="uploadToS3()">
-        Upload to Cloud
-    </button>
-    
-    <div class="file-list">
-        <h4>Uploaded Files</h4>
-        <button class="btn" onclick="refreshFileList()">
-            Refresh List
-        </button>
-        <ul id="s3FileList"></ul>
-    </div>
-</div>
+        <h2>WHAT THE APP CAN DO:</h2>
+        <p>The web
+            application will provide users with access to information about
+            different
+            movies, directors, and genres.User must create a login and recieve a
+            token to access the app. Users will be able to sign up, update their
+            personal information, and create a list of their favorite
+            movies.</p>
+        <h3>URL ENDPOINT AND THEIR METHOD:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Business Logic</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                    <th>HTTP Method</th>
+                    <th>Query Parameters</th>
+                    <th>Request body data format</th>
+                    <th>Response body data format</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!--Get all movies-->
+                <tr>
+                    <td>Get All Movies</td>
+                    <td>/movies</td>
+                    <td>Returns a list of all movies</td>
+                    <td>GET</td>
+                    <td>None</td>
+                    <td>None</td>
+                    <td>JSON of movie array.If no movies are avialable returns a
+                        500 error</td>
+                </tr>
+                <!--Get movie by title--->
+                <tr>
+                    <td>Get a specific movie by title</td>
+                    <td>/movies/:title</td>
+                    <td>Returns a movie by its specified title</td>
+                    <td>GET</td>
+                    <td>title (URL parameter)</td>
+                    <td>None</td>
+                    <td>JSON obejct with specific movie. If movie is not found
+                        returns a 404 error.</td>
+                </tr>
+                <!--Get movie by genre-->
+                <tr>
+                    <td>Get Movies by Genre</td>
+                    <td>/movies/genre/:genrename</td>
+                    <td>Returns a movie by its genre</td>
+                    <td>GET</td>
+                    <td>name (URL parameter)</td>
+                    <td>None</td>
+                    <td>JSON object with details about a genre,including movies
+                        of that genre. If no mvoies are found a 404 error is
+                        returned.</td>
+                </tr>
+                <!--Get movie by director name-->
+                <tr>
+                    <td>Get Movies by Director's Name</td>
+                    <td>/movies/director/:directorsName</td>
+                    <td>Returns movies by the directors name</td>
+                    <td>GET</td>
+                    <td>name (URL parameter)</td>
+                    <td>None</td>
+                    <td>JSON object about director and movie they directed. If
+                        no movie found returns error.</td>
+                </tr>
 
-    <h2>WHAT THE APP CAN DO:</h2>
-<p>The web
-    application will provide users with access to information about different
-    movies, directors, and genres.User must create a login and recieve a token  to access the app. Users will be able to sign up, update their
-    personal information, and create a list of their favorite movies.</p>
-<h3>URL ENDPOINT AND THEIR METHOD:</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Business Logic</th>
-            <th>URL</th>
-            <th>Description</th>
-            <th>HTTP Method</th>
-            <th>Query Parameters</th>
-            <th>Request body data format</th>
-            <th>Response body data format</th>
-        </tr>
-    </thead>
-    <tbody>
-        <!--Get all movies-->
-        <tr>
-            <td>Get All Movies</td>
-            <td>/movies</td>
-            <td>Returns a list of all movies</td>
-            <td>GET</td>
-            <td>None</td>
-            <td>None</td>
-            <td>JSON of movie array.If no movies are avialable returns a 500 error</td>
-        </tr>
-        <!--Get movie by title--->
-        <tr>
-            <td>Get a specific movie by title</td>
-            <td>/movies/:title</td>
-            <td>Returns a movie by its specified title</td>
-            <td>GET</td>
-            <td>title (URL parameter)</td>
-            <td>None</td>
-            <td>JSON obejct with specific movie. If movie is not found returns a 404 error.</td>
-        </tr>
-        <!--Get movie by genre-->
-        <tr>
-            <td>Get Movies by Genre</td>
-            <td>/movies/genre/:genrename</td>
-            <td>Returns a movie by its genre</td>
-            <td>GET</td>
-            <td>name (URL parameter)</td>
-            <td>None</td>
-            <td>JSON object with details about a genre,including movies of that genre. If no mvoies are found a 404 error is returned.</td>
-        </tr>
-        <!--Get movie by director name-->
-        <tr>
-            <td>Get Movies by Director's Name</td>
-            <td>/movies/director/:directorsName</td>
-            <td>Returns movies by the directors name</td>
-            <td>GET</td>
-            <td>name (URL parameter)</td>
-            <td>None</td>
-            <td>JSON object about director and movie they directed. If no movie found returns error.</td>
-        </tr>
+                <!--Gets all existing users-->
+                <tr>
+                    <td>Gets all existing users</td>
+                    <td>/users</td>
+                    <td>Displays all existing users</td>
+                    <td>GET</td>
+                    <td>None (URL parameter)</td>
+                    <td>None</td>
+                    <td>JSON object with information. If no users to display a
+                        404 error is returned.</td>
+                </tr>
 
-         <!--Gets all existing users-->
-         <tr>
-            <td>Gets all existing users</td>
-            <td>/users</td>
-            <td>Displays all existing users</td>
-            <td>GET</td>
-            <td>None (URL parameter)</td>
-            <td>None</td>
-            <td>JSON object with information. If no users to display a 404 error is returned.</td>
-        </tr>
+                <!--Create a new user-->
+                <tr>
+                    <td>Create a New User</td>
+                    <td>/users</td>
+                    <td>Allows a new user to create profile</td>
+                    <td>POST</td>
+                    <td>None (URL parameter)</td>
+                    <td>JSON object with required fields (enter field name as
+                        is):firstName, lastName , username , password , email
+                        and optional Birthday.</td>
+                    <td>JSON object with new user's data. If a field is faulty,
+                        a 422 error is returned. If a required field is missing
+                        or already exists, a 400 error is returned..</td>
+                </tr>
 
-        <!--Create a new user-->
-        <tr>
-            <td>Create a New User</td>
-            <td>/users</td>
-            <td>Allows a new user to create profile</td>
-            <td>POST</td>
-            <td>None (URL parameter)</td>
-            <td>JSON object with required fields (enter field name as is):firstName, lastName , username , password , email and optional Birthday.</td>
-            <td>JSON object with new user's data. If a field is faulty, a 422 error is returned. If a required field is missing or already exists, a 400 error is returned..</td>
-        </tr>
+                <!--Login in new user to authenticate-->
+                <tr>
+                    <td>Login/authenticate New User</td>
+                    <td>/login?username:&password:</td>
+                    <td>Allows a new user to register and recieve token.</td>
+                    <td>POST</td>
+                    <td>username and password</td>
+                    <td>Enter username and password (keys) and their values in
+                        query params. Copy created token and add to
+                        authorization (Bearer Token)</td>
+                    <td> JSON object of succesful login with userId and username
+                        and token. If login fails, a 400 error is returned.</td>
+                </tr>
 
-      <!--Login in new user to authenticate-->
-      <tr>
-        <td>Login/authenticate New User</td>
-        <td>/login?username:&password:</td>
-        <td>Allows a new user to register and recieve token.</td>
-        <td>POST</td>
-        <td>username and password</td>
-        <td>Enter username and password (keys) and their values in query params. Copy created token and add to authorization (Bearer Token)</td>
-        <td> JSON object of succesful login with userId and username and token. If login fails, a 400 error is returned.</td>
-    </tr>
-
-
-
-
-        <!--Update user info-->
-        <tr>
-            <td>Update user information by User Name</td>
-            <td>/users/:username</td>
-            <td>Allows a user to update name and other info</td>
-            <td>PUT</td>
-            <td>Username (URL parameter)</td>
-            <td>JSON object with updated user info</td>
-            <td>JSON object with updated information. If a field is faulty, a 422 error is returned. If a required field is missing or already exists, a 400 error is returned</td>
-        </tr>
-        <!--Add movie to Users favorites-->
-        <tr>
-            <td>Add a movie to User's favourites list</td>
-            <td>/users/:username/movieid</td>
-            <td>Allows a user to add a favorite movie</td>
-            <td>POST</td>
-            <td>username, movieid (URL parameter)</td>
-            <td>JSON object with movie title</td>
-            <td>If the user and movie both exist, the movie is added to the user's favorites list. If the movie is already on the list, a 400 error is returned. If either the user or movie is not found, a 404 error is returned.</td>
-        </tr>
-        <!--Delete a user's favorite movie-->
-        <tr>
-            <td>Remove a movie from user's favourites list</td>
-            <td>/users/:username/movieid</td>
-            <td>Allows a user to remove movies from the favorite list</td>
-            <td>DELETE</td>
-            <td>username, movieid</td>
-            <td>None</td>
-            <td> If the user and movie both exist, the movie is removed from the user's favorites list. If either user or movie is not found, a 404 error is returned.</td>
-        </tr>
-        <!--Deregister a user-->
-        <tr>
-            <td>Delete a User by usernmae</td>
-            <td>/users/:username</td>
-            <td>Allows a user to be deleted</td>
-            <td>DELETE</td>
-            <td>username (URL parameter)</td>
-            <td>None</td>
-            <td> If the user exists, they are removed and a confirmation message is returned. If the user does not exist, a 404 error is returned.</td>
-        </tr>
-    </tbody>
-</table>
-          
+                <!--Update user info-->
+                <tr>
+                    <td>Update user information by User Name</td>
+                    <td>/users/:username</td>
+                    <td>Allows a user to update name and other info</td>
+                    <td>PUT</td>
+                    <td>Username (URL parameter)</td>
+                    <td>JSON object with updated user info</td>
+                    <td>JSON object with updated information. If a field is
+                        faulty, a 422 error is returned. If a required field is
+                        missing or already exists, a 400 error is returned</td>
+                </tr>
+                <!--Add movie to Users favorites-->
+                <tr>
+                    <td>Add a movie to User's favourites list</td>
+                    <td>/users/:username/movieid</td>
+                    <td>Allows a user to add a favorite movie</td>
+                    <td>POST</td>
+                    <td>username, movieid (URL parameter)</td>
+                    <td>JSON object with movie title</td>
+                    <td>If the user and movie both exist, the movie is added to
+                        the user's favorites list. If the movie is already on
+                        the list, a 400 error is returned. If either the user or
+                        movie is not found, a 404 error is returned.</td>
+                </tr>
+                <!--Delete a user's favorite movie-->
+                <tr>
+                    <td>Remove a movie from user's favourites list</td>
+                    <td>/users/:username/movieid</td>
+                    <td>Allows a user to remove movies from the favorite
+                        list</td>
+                    <td>DELETE</td>
+                    <td>username, movieid</td>
+                    <td>None</td>
+                    <td> If the user and movie both exist, the movie is removed
+                        from the user's favorites list. If either user or movie
+                        is not found, a 404 error is returned.</td>
+                </tr>
+                <!--Deregister a user-->
+                <tr>
+                    <td>Delete a User by usernmae</td>
+                    <td>/users/:username</td>
+                    <td>Allows a user to be deleted</td>
+                    <td>DELETE</td>
+                    <td>username (URL parameter)</td>
+                    <td>None</td>
+                    <td> If the user exists, they are removed and a confirmation
+                        message is returned. If the user does not exist, a 404
+                        error is returned.</td>
+                </tr>
+            </tbody>
+        </table>
 
         <script>
-            let selectedFile = null;
+         let selectedFile = null;
 
-document.getElementById('s3FileInput').addEventListener('change', function(e) {
-    selectedFile = e.target.files[0];
-    document.getElementById('selectedFileName').textContent = selectedFile.name;
-});
-
-async function uploadToS3() {
-    if (!selectedFile) {
-        alert('Please select a file first');
-        return;
-    }
-    
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    
-    try {
-        const response = await fetch('/api/s3/upload', {
-            method: 'POST',
-            body: formData
+        document.getElementById('s3FileInput').addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            document.getElementById('selectedFileName').textContent = selectedFile.name;
         });
-        
-        if (!response.ok) {
-            throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+
+        async function uploadToS3() {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                const response = await fetch('/api/s3/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                alert(result.message);
+                refreshFileList();
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+            }
         }
-        
-        const result = await response.json();
-        alert(result.message);
+
+        async function refreshFileList() {
+            try {
+                // Use the gallery endpoint instead of objects endpoint
+                const response = await fetch('/api/s3/gallery');
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch images: ${response.status} ${response.statusText}`);
+                }
+                
+                const images = await response.json();
+                
+                const fileList = document.getElementById('s3FileList');
+                fileList.innerHTML = '';
+                
+                if (images.length === 0) {
+                    fileList.innerHTML = '<p>No images found</p>';
+                    return;
+                }
+                
+                images.forEach(image => {
+                    const div = document.createElement('div');
+                    div.className = 'gallery-item';
+                    div.innerHTML = `
+                        <img src="${image.url}" alt="${image.name}" class="gallery-image">
+                        <div class="image-details">
+                            <p>${image.name}</p>
+                            <button class="btn" onclick="downloadFile('${image.name}')">Download</button>
+                            <button class="btn btn-danger" onclick="deleteFile('${image.name}')">Delete</button>
+                        </div>
+                    `;
+                    fileList.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Failed to fetch image list:', error);
+                alert('Failed to load images. Please try again.');
+            }
+        }
+
+        function downloadFile(key) {
+            // Download the resized image
+            window.open(`/api/s3/download/resized-images/${key}`, '_blank');
+        }
+
+        async function deleteFile(key) {
+            if (!confirm(`Are you sure you want to delete "${key}"?`)) {
+                return;
+            }
+            
+            try {
+                // Delete both the original and resized images
+                const response1 = await fetch(`/api/s3/delete/original-images/${key}`, {
+                    method: 'DELETE'
+                });
+                
+                const response2 = await fetch(`/api/s3/delete/resized-images/${key}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response1.ok || !response2.ok) {
+                    throw new Error(`Delete failed: ${response1.status} ${response2.status}`);
+                }
+                
+                alert('Image deleted successfully');
+                refreshFileList();
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Delete failed: ' + error.message);
+            }
+        }
+
+        // Initial load
         refreshFileList();
-    } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed: ' + error.message);
-    }
-}
-
-async function refreshFileList() {
-    try {
-        const response = await fetch('/api/s3/objects');
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
-        }
-        
-        const files = await response.json();
-        
-        const fileList = document.getElementById('s3FileList');
-        fileList.innerHTML = '';
-        
-        if (files.length === 0) {
-            fileList.innerHTML = '<li>No files found</li>';
-            return;
-        }
-        
-        files.forEach(file => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${file.Key}</span>
-                <div>
-                    <button class="btn" onclick="downloadFile('${file.Key}')">
-                        Download
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteFile('${file.Key}')">
-                        Delete
-                    </button>
-                </div>
-            `;
-            fileList.appendChild(li);
-        });
-    } catch (error) {
-        console.error('Failed to fetch file list:', error);
-        alert('Failed to load files. Please try again.');
-    }
-}
-
-function downloadFile(key) {
-    window.open(`/api/s3/download/${key}`, '_blank');
-}
-
-async function deleteFile(key) {
-    if (!confirm(`Are you sure you want to delete "${key}"?`)) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/s3/delete/${key}`, {
-            method: 'DELETE'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Delete failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const result = await response.json();
-        alert(result.message);
-        refreshFileList();
-    } catch (error) {
-        console.error('Delete error:', error);
-        alert('Delete failed: ' + error.message);
-    }
-}
-
-// Initial load
-refreshFileList();
-        </script>
-
-</body>
+    </script>
+    </body>
 </html>
-
