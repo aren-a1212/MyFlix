@@ -1,3 +1,4 @@
+require('dotenv').config();
 const fileUpload = require('express-fileupload');
 const { S3Client, ListObjectsV2Command, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
@@ -22,11 +23,14 @@ const cors = require('cors');
 
 app.use(fileUpload());
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  // forcePathStyle: true,
-});
-const BUCKET_NAME = process.env.BUCKET_NAME || 'myflix-media-bucket';
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+const IMAGES_BUCKET = process.env.IMAGES_BUCKET || 'bucketfor2.5forlambda';
+const PREFIX_ORIG = (process.env.IMAGES_PREFIX_ORIG || 'original-images/');
+const PREFIX_THUMBS = (process.env.IMAGES_PREFIX_THUMBS || 'resized-images/');
+const s3Client = new S3Client({ region: AWS_REGION });
+
+
+app.get('/healthz', (_, res) => res.status(200).send('ok'));
 /**
  * CORS configuration with allowed origins
  * @type {import('cors').CorsOptions}
@@ -41,7 +45,8 @@ app.use(cors({
       'https://aren-a1212.github.io',
       "https://movies-fix-b2e97731bf8c.herokuapp.com",
       "https://arenmyflix.netlify.app",
-      "http://54.147.37.43"
+      "http://54.147.37.43",
+      "http://myflix-media-bucket.s3-website-us-east-1.amazonaws.com",
     ];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -569,104 +574,63 @@ app.post('/api/s3/upload', async (req, res) => {
  */
 app.get('/api/s3/objects', async (req, res) => {
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME
-    });
-    const data = await s3Client.send(command);
-    res.json(data.Contents || []);
-  } catch (error) {
-    console.error('S3 List Error:', error);
-    res.status(500).json({ error: error.message });
-  }
+    const r = await s3Client.send(new ListObjectsV2Command({ Bucket: IMAGES_BUCKET }));
+    res.json(r.Contents || []);
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
 // Gallery endpoint - returns resized images
 app.get('/api/s3/gallery', async (req, res) => {
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Prefix: 'resized-images/'
-    });
-    const data = await s3Client.send(command);
-
-    const images = (data.Contents || [])
-      .filter(item => item.Key !== 'resized-images/') // Exclude the folder itself
-      .map(item => ({
-        name: item.Key.replace('resized-images/', ''),
-        url: `https://${BUCKET_NAME}.s3.amazonaws.com/${item.Key}`,
-        lastModified: item.LastModified,
-        size: item.Size
-      }));
-
+    const r = await s3Client.send(new ListObjectsV2Command({
+      Bucket: IMAGES_BUCKET, Prefix: PREFIX_THUMBS
+    }));
+    const items = (r.Contents || []).filter(o => o.Key !== PREFIX_THUMBS);
+    const images = await Promise.all(items.map(async (o) => {
+      const url = await getSignedUrl(
+        s3Client,
+        new GetObjectCommand({ Bucket: IMAGES_BUCKET, Key: o.Key }),
+        { expiresIn: 300 }
+      );
+      return {
+        key: o.Key,
+        name: o.Key.substring(PREFIX_THUMBS.length),
+        url,
+        lastModified: o.LastModified,
+        size: o.Size
+      };
+    }));
     res.json(images);
-  } catch (error) {
-    console.error('S3 Gallery Error:', error);
-    res.status(500).json({ error: error.message });
-  }
+  } catch (e) { console.error('S3 Gallery Error:', e); res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/s3/upload', async (req, res) => {
   try {
-    if (!req.files || !req.files.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-
-    const file = req.files.file;
-    const fileName = `original-images/${Date.now()}-${file.name}`;
-
-    const uploadParams = {
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-      Body: file.data,
-      ContentType: file.mimetype
-    };
-
-    const command = new PutObjectCommand(uploadParams);
-    await s3Client.send(command);
-
-    res.json({ message: 'File uploaded successfully', fileName });
-  } catch (error) {
-    console.error('S3 Upload Error:', error);
-    res.status(500).json({ error: error.message });
-  }
+    if (!req.files || !req.files.file) return res.status(400).json({ error: 'No file uploaded' });
+    const f = req.files.file;
+    const key = `${PREFIX_ORIG}${Date.now()}-${f.name}`;
+    await s3Client.send(new PutObjectCommand({
+      Bucket: IMAGES_BUCKET, Key: key, Body: f.data, ContentType: f.mimetype
+    }));
+    res.json({ message: 'File uploaded', key });
+  } catch (e) { console.error('S3 Upload Error:', e); res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/s3/download/:key', async (req, res) => {
+app.get('/api/s3/download/:key(*)', async (req, res) => {     // note :key(*) to allow slashes
   try {
     const key = req.params.key;
-    const command = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key
-    });
-
-    const data = await s3Client.send(command);
-
-    res.setHeader('Content-Disposition', `attachment; filename="${key}"`);
-    if (data.ContentType) {
-      res.setHeader('Content-Type', data.ContentType);
-    }
-
-    data.Body.pipe(res);
-  } catch (error) {
-    console.error('S3 Download Error:', error);
-    res.status(500).json({ error: error.message });
-  }
+    const obj = await s3Client.send(new GetObjectCommand({ Bucket: IMAGES_BUCKET, Key: key }));
+    if (obj.ContentType) res.setHeader('Content-Type', obj.ContentType);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(key.split('/').pop())}"`);
+    obj.Body.pipe(res);
+  } catch (e) { console.error('S3 Download Error:', e); res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/s3/delete/:key', async (req, res) => {
+app.delete('/api/s3/delete/:key(*)', async (req, res) => {
   try {
-    const key = req.params.key;
-    const command = new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key
-    });
-
-    await s3Client.send(command);
-    res.json({ message: 'File deleted successfully', fileName: key });
-  } catch (error) {
-    console.error('S3 Delete Error:', error);
-    res.status(500).json({ error: error.message });
-  }
+    await s3Client.send(new DeleteObjectCommand({ Bucket: IMAGES_BUCKET, Key: req.params.key }));
+    res.json({ message: 'Deleted', key: req.params.key });
+  } catch (e) { console.error('S3 Delete Error:', e); res.status(500).json({ error: e.message }); }
 });
 
 const port = process.env.PORT || 8080;

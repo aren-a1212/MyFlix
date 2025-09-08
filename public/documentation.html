@@ -256,113 +256,84 @@
         </table>
 
         <script>
-         let selectedFile = null;
+const PREFIX_ORIG = 'original-images/';
+const PREFIX_THUMBS = 'resized-images/';
 
-        document.getElementById('s3FileInput').addEventListener('change', function(e) {
-            selectedFile = e.target.files[0];
-            document.getElementById('selectedFileName').textContent = selectedFile.name;
-        });
+/* If this HTML is served from S3/GitHub/Netlify, set API_BASE to your ALB DNS.
+   If it’s served by Express behind the ALB, leave it '' to use same-origin. */
+const API_BASE =
+  (location.hostname.includes('s3-website') ||
+   location.hostname.endsWith('github.io') ||
+   location.hostname.endsWith('netlify.app'))
+    ? 'http://MYLOADBALANCER-978767482.us-east-1.elb.amazonaws.com'   // <-- replace with your ALB DNS
+    : '';
 
-        async function uploadToS3() {
-            if (!selectedFile) {
-                alert('Please select a file first');
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            
-            try {
-                const response = await fetch('/api/s3/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-                }
-                
-                const result = await response.json();
-                alert(result.message);
-                refreshFileList();
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert('Upload failed: ' + error.message);
-            }
-        }
+let selectedFile = null;
 
-        async function refreshFileList() {
-            try {
-                // Use the gallery endpoint instead of objects endpoint
-                const response = await fetch('/api/s3/gallery');
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch images: ${response.status} ${response.statusText}`);
-                }
-                
-                const images = await response.json();
-                
-                const fileList = document.getElementById('s3FileList');
-                fileList.innerHTML = '';
-                
-                if (images.length === 0) {
-                    fileList.innerHTML = '<p>No images found</p>';
-                    return;
-                }
-                
-                images.forEach(image => {
-                    const div = document.createElement('div');
-                    div.className = 'gallery-item';
-                    div.innerHTML = `
-                        <img src="${image.url}" alt="${image.name}" class="gallery-image">
-                        <div class="image-details">
-                            <p>${image.name}</p>
-                            <button class="btn" onclick="downloadFile('${image.name}')">Download</button>
-                            <button class="btn btn-danger" onclick="deleteFile('${image.name}')">Delete</button>
-                        </div>
-                    `;
-                    fileList.appendChild(div);
-                });
-            } catch (error) {
-                console.error('Failed to fetch image list:', error);
-                alert('Failed to load images. Please try again.');
-            }
-        }
+document.getElementById('s3FileInput').addEventListener('change', (e) => {
+  selectedFile = e.target.files[0];
+  document.getElementById('selectedFileName').textContent = selectedFile ? selectedFile.name : '';
+});
 
-        function downloadFile(key) {
-            // Download the resized image
-            window.open(`/api/s3/download/resized-images/${key}`, '_blank');
-        }
+async function uploadToS3() {
+  if (!selectedFile) { alert('Please select a file first'); return; }
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  const res = await fetch(`${API_BASE}/api/s3/upload`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  const out = await res.json();
+  alert(out.message || 'Uploaded');
+  refreshFileList();
+}
 
-        async function deleteFile(key) {
-            if (!confirm(`Are you sure you want to delete "${key}"?`)) {
-                return;
-            }
-            
-            try {
-                // Delete both the original and resized images
-                const response1 = await fetch(`/api/s3/delete/original-images/${key}`, {
-                    method: 'DELETE'
-                });
-                
-                const response2 = await fetch(`/api/s3/delete/resized-images/${key}`, {
-                    method: 'DELETE'
-                });
-                
-                if (!response1.ok || !response2.ok) {
-                    throw new Error(`Delete failed: ${response1.status} ${response2.status}`);
-                }
-                
-                alert('Image deleted successfully');
-                refreshFileList();
-            } catch (error) {
-                console.error('Delete error:', error);
-                alert('Delete failed: ' + error.message);
-            }
-        }
+async function refreshFileList() {
+  const res = await fetch(`${API_BASE}/api/s3/gallery`);
+  if (!res.ok) throw new Error(`Failed to fetch images: ${res.status}`);
+  const images = await res.json();
 
-        // Initial load
-        refreshFileList();
-    </script>
+  const fileList = document.getElementById('s3FileList');
+  fileList.innerHTML = images.length ? '' : '<p>No images found</p>';
+
+  images.forEach(image => {
+    // backend returns: { key, name, url, ... }
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    div.innerHTML = `
+      <img src="${image.url}" alt="${image.name}" class="gallery-image">
+      <div class="image-details">
+        <p>${image.name}</p>
+        <button class="btn" onclick="viewOriginal('${encodeURIComponent(image.key)}')">View original</button>
+        <button class="btn" onclick="downloadFile('${encodeURIComponent(image.key)}')">Download thumb</button>
+        <button class="btn btn-danger" onclick="deleteFile('${encodeURIComponent(image.key)}')">Delete</button>
+      </div>
+    `;
+    fileList.appendChild(div);
+  });
+}
+
+function viewOriginal(thumbKeyEnc) {
+  const thumbKey = decodeURIComponent(thumbKeyEnc);
+  const origKey = thumbKey.replace(PREFIX_THUMBS, PREFIX_ORIG);
+  window.open(`${API_BASE}/api/s3/download/${encodeURIComponent(origKey)}`, '_blank');
+}
+
+function downloadFile(keyEnc) {
+  const key = decodeURIComponent(keyEnc);
+  window.open(`${API_BASE}/api/s3/download/${encodeURIComponent(key)}`, '_blank');
+}
+
+async function deleteFile(thumbKeyEnc) {
+  if (!confirm('Delete this image (thumb + original)?')) return;
+  const thumbKey = decodeURIComponent(thumbKeyEnc);
+  const origKey = thumbKey.replace(PREFIX_THUMBS, PREFIX_ORIG);
+  const d1 = await fetch(`${API_BASE}/api/s3/delete/${encodeURIComponent(origKey)}`, { method: 'DELETE' });
+  const d2 = await fetch(`${API_BASE}/api/s3/delete/${encodeURIComponent(thumbKey)}`, { method: 'DELETE' });
+  if (!d1.ok || !d2.ok) { alert('Delete failed'); return; }
+  refreshFileList();
+}
+
+document.addEventListener('DOMContentLoaded', refreshFileList);
+</script>
+
     </body>
 </html>
