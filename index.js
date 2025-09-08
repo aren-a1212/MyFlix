@@ -583,37 +583,42 @@ app.get('/api/s3/objects', async (req, res) => {
 app.get('/api/s3/gallery', async (req, res) => {
   try {
     const r = await s3Client.send(new ListObjectsV2Command({
-      Bucket: IMAGES_BUCKET, Prefix: PREFIX_THUMBS
+      Bucket: IMAGES_BUCKET
     }));
-    const items = (r.Contents || []).filter(o => o.Key !== PREFIX_THUMBS);
-    const images = await Promise.all(items.map(async (o) => {
-      const url = await getSignedUrl(
-        s3Client,
-        new GetObjectCommand({ Bucket: IMAGES_BUCKET, Key: o.Key }),
-        { expiresIn: 300 }
-      );
-      return {
-        key: o.Key,
-        name: o.Key.substring(PREFIX_THUMBS.length),
-        url,
-        lastModified: o.LastModified,
-        size: o.Size
-      };
-    }));
+
+    // Filter out any folder objects and format the response
+    const images = (r.Contents || [])
+      .filter(item => item.Size > 0) // Exclude folders
+      .map(item => ({
+        name: item.Key,
+        url: `https://${IMAGES_BUCKET}.s3.amazonaws.com/${item.Key}`,
+        size: item.Size,
+        lastModified: item.LastModified
+      }));
+
     res.json(images);
-  } catch (e) { console.error('S3 Gallery Error:', e); res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('S3 Gallery Error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/s3/upload', async (req, res) => {
   try {
     if (!req.files || !req.files.file) return res.status(400).json({ error: 'No file uploaded' });
     const f = req.files.file;
-    const key = `${PREFIX_ORIG}${Date.now()}-${f.name}`;
+    const key = `${Date.now()}-${f.name}`; // Remove the PREFIX_ORIG since you're using a different bucket
     await s3Client.send(new PutObjectCommand({
-      Bucket: IMAGES_BUCKET, Key: key, Body: f.data, ContentType: f.mimetype
+      Bucket: 'myflix-media-bucket', // Use your actual bucket name
+      Key: key,
+      Body: f.data,
+      ContentType: f.mimetype
     }));
     res.json({ message: 'File uploaded', key });
-  } catch (e) { console.error('S3 Upload Error:', e); res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error('S3 Upload Error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/s3/download/:key(*)', async (req, res) => {     // note :key(*) to allow slashes
