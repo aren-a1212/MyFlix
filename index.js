@@ -46,6 +46,8 @@ app.use(cors({
       "https://movies-fix-b2e97731bf8c.herokuapp.com",
       "https://arenmyflix.netlify.app",
       "http://54.147.37.43",
+      "http://44.216.175.36",
+      "http://44.216.175.36:8080",
       "http://myflix-media-bucket.s3-website-us-east-1.amazonaws.com",
     ];
     if (!origin || allowedOrigins.includes(origin)) {
